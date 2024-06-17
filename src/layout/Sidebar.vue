@@ -55,7 +55,7 @@ let handleWindowResize = () => {
                             
                         ></div> -->
                         <router-link
-                            to="/dashboards/dashboard-version-one"
+                            to="/dashboards/dashboard-pegas-gonda"
                             tag="li"
                             class="nav-item"
                         >
@@ -64,7 +64,7 @@ let handleWindowResize = () => {
                                 <p>Dashboard</p>
                             </div>
                         </router-link>
-                        <router-link
+                        <!-- <router-link
                             to="/components/button"
                             tag="li"
                             class="nav-item"
@@ -83,8 +83,8 @@ let handleWindowResize = () => {
                                 <i class="i-Find-User text-3xl"></i>
                                 <p>Profile</p>
                             </div>
-                        </router-link>
-                        <router-link to="/signIn" tag="li" class="nav-item">
+                        </router-link> -->
+                        <!-- <router-link to="/signIn" tag="li" class="nav-item">
                             <div class="nav-item-hold">
                                 <i class="i-Checked-User text-3xl"></i>
                                 <p>Sign In</p>
@@ -95,14 +95,9 @@ let handleWindowResize = () => {
                                 <i class="i-Checked-User text-3xl"></i>
                                 <p>Sign Up</p>
                             </div>
-                        </router-link>
+                        </router-link> -->
 
-                        <a
-                            href="https://aatorx-vue-doc.vercel.app/"
-                            tag="a"
-                            class="nav-item"
-                            target="_blank"
-                        >
+                        <a href="http://localhost:8000/docs#/" tag="a" class="nav-item" target="_blank">
                             <div class="nav-item-hold">
                                 <i class="i-File-Word text-3xl"></i>
                                 <p>Doc</p>

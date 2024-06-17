@@ -1,4 +1,109 @@
-import { createRouter, createWebHistory } from 'vue-router'
+// src/router/index.js
+
+import { createRouter, createWebHistory } from 'vue-router';
+import Home from '../views/Home.vue';
+// import Dashboard from '@/views/Dashboard.vue'; // Import the Dashboard component
+import ManufacturingToolStatistics from '../views/ManufacturingToolStatistics.vue';
+import Effectivity from '../views/Effectivity.vue';
+import LoadedPrograms from '../views/LoadedPrograms.vue';
+import Alarms from '../views/Alarms.vue';
+import NotFound from '../views/NotFound.vue';
+import store from '../store';
+import SignIn from '../views/sessions/SignIn.vue';
+import SignUp from '../views/sessions/SignUp.vue';
+
+const routes = [
+    { path: '/',
+        name: 'Home',
+        component: () => import('../layout/index.vue'),
+        redirect: '/dashboards/dashboard-pegas-gonda',
+        meta: {
+            title: 'Home',
+        },
+
+        children: [
+            {
+                path: '/dashboards',
+                name: 'Dashboards',
+                component: () => import('../views/dashboards/index.vue'),
+                meta: {
+                    title: 'Dashboard',
+                },
+                children: [
+                    {
+                        path: 'dashboard-version-one',
+                        name: 'dashboard-version-one',
+                        component: () =>
+                            import('../views/dashboards/Dashboards.v1.vue'),
+                    },
+                    {
+                        path: 'dashboard-pegas-gonda',
+                        name: 'dashboard-pegas-gonda',
+                        component: () =>
+                            import('../views/dashboards/DashboardPeagsGonda.vue'),
+                    },
+                ],
+            },
+            {
+                path: '/components',
+                name: 'components',
+                component: () => import('../views/components/index.vue'),
+                meta: {
+                    title: 'Components',
+                },
+                children: [
+                    {
+                        path: 'button',
+                        name: 'button',
+                        component: () =>
+                            import('../views/components/Button.vue'),
+                    },
+                ],
+            },
+            {
+                path: '/profile',
+                name: 'profile',
+                component: () => import('../views/profile/index.vue'),
+                meta: {
+                    title: 'Profile',
+                },
+                children: [
+                    {
+                        path: 'profileTwo',
+                        name: 'ProfileTwo',
+                        component: () =>
+                            import('../views/profile/ProfileTwo.vue'),
+                    },
+                ],
+            },
+        ],
+    },
+    { path: '/signIn', component: SignIn },
+    { path: '/signUp', component: SignUp },
+    { path: '/:path(.*)', component: NotFound },
+    { path: '/manufacturing-tool-statistics', name: 'ManufacturingToolStatistics', component: ManufacturingToolStatistics },
+    { path: '/effectivity', name: 'Effectivity', component: Effectivity },
+    { path: '/loaded-programs', name: 'LoadedPrograms', component: LoadedPrograms },
+    { path: '/alarms', name: 'Alarms', component: Alarms },
+];
+
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes,
+});
+
+router.afterEach(() => {
+    if (window.innerWidth <= 1200) {
+        const sidenav =
+            store.state.largeSidebar.sidebarToggleProperties.isSideNavOpen
+
+        store.commit('largeSidebar/toggleSidebarProperties')
+    }
+})
+
+export default router;
+
+/* import { createRouter, createWebHistory } from 'vue-router'
 import NotFound from '../views/NotFound.vue'
 import store from '../store'
 import SignIn from '../views/sessions/SignIn.vue'
@@ -90,3 +195,4 @@ router.afterEach(() => {
 })
 
 export default router
+ */
