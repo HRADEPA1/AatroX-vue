@@ -2,7 +2,6 @@
 
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
-// import Dashboard from '@/views/Dashboard.vue'; // Import the Dashboard component
 import ManufacturingToolStatistics from '../views/ManufacturingToolStatistics.vue';
 import Effectivity from '../views/Effectivity.vue';
 import LoadedPrograms from '../views/LoadedPrograms.vue';
@@ -11,6 +10,7 @@ import NotFound from '../views/NotFound.vue';
 import store from '../store';
 import SignIn from '../views/sessions/SignIn.vue';
 import SignUp from '../views/sessions/SignUp.vue';
+import { bandsawRoutes } from './bandsaw';
 
 const routes = [
     { path: '/',
@@ -43,6 +43,35 @@ const routes = [
                             import('../views/dashboards/DashboardPeagsGonda.vue'),
                     },
                 ],
+            },
+            // Bandsaw routes (Catalog, Programs, Machines)
+            ...bandsawRoutes,
+            // Management section
+            {
+                path: '/management',
+                name: 'Management',
+                component: () => import('../views/management/index.vue'),
+                meta: {
+                    title: 'Management',
+                },
+            },
+            // Notifications
+            {
+                path: '/notifications',
+                name: 'Notifications',
+                component: () => import('../views/Notifications.vue'),
+                meta: {
+                    title: 'Notifications',
+                },
+            },
+            // Help
+            {
+                path: '/help',
+                name: 'Help',
+                component: () => import('../views/Help.vue'),
+                meta: {
+                    title: 'Help',
+                },
             },
             {
                 path: '/components',

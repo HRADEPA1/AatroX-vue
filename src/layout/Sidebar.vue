@@ -47,13 +47,7 @@ let handleWindowResize = () => {
             >
                 <perfect-scrollbar>
                     <ul class="navigation-left">
-                        <!-- <div 
-                            @mouseenter="toggleSubMenu" 
-                            class="nav-item" 
-                            :class="selectedParentMenu == 'dashboards' ? 'active' : ''"
-                            data-item="dashboards"
-                            
-                        ></div> -->
+                        <!-- Dashboard -->
                         <router-link
                             to="/dashboards/dashboard-pegas-gonda"
                             tag="li"
@@ -64,16 +58,80 @@ let handleWindowResize = () => {
                                 <p>Dashboard</p>
                             </div>
                         </router-link>
-                        <!-- <router-link
-                            to="/components/button"
+
+                        <!-- Catalog of bandsaws -->
+                        <router-link
+                            to="/catalog"
                             tag="li"
                             class="nav-item"
                         >
                             <div class="nav-item-hold">
-                                <i class="i-Wallet text-3xl"></i>
-                                <p>Buttons</p>
+                                <i class="i-Library text-3xl"></i>
+                                <p>Catalog</p>
                             </div>
                         </router-link>
+
+                        <!-- My machines -->
+                        <router-link
+                            to="/my-machines"
+                            tag="li"
+                            class="nav-item"
+                        >
+                            <div class="nav-item-hold">
+                                <i class="i-Gears text-3xl"></i>
+                                <p>Machines</p>
+                            </div>
+                        </router-link>
+
+                        <!-- Programs -->
+                        <router-link
+                            to="/programs"
+                            tag="li"
+                            class="nav-item"
+                        >
+                            <div class="nav-item-hold">
+                                <i class="i-File-Clipboard-File--Text text-3xl"></i>
+                                <p>Programs</p>
+                            </div>
+                        </router-link>
+
+                        <!-- Management -->
+                        <router-link
+                            to="/management"
+                            tag="li"
+                            class="nav-item"
+                        >
+                            <div class="nav-item-hold">
+                                <i class="i-Administrator text-3xl"></i>
+                                <p>Management</p>
+                            </div>
+                        </router-link>
+
+                        <!-- Notifications -->
+                        <router-link
+                            to="/notifications"
+                            tag="li"
+                            class="nav-item"
+                        >
+                            <div class="nav-item-hold">
+                                <i class="i-Bell text-3xl"></i>
+                                <p>Notifications</p>
+                            </div>
+                        </router-link>
+
+                        <!-- Help -->
+                        <router-link
+                            to="/help"
+                            tag="li"
+                            class="nav-item"
+                        >
+                            <div class="nav-item-hold">
+                                <i class="i-Information text-3xl"></i>
+                                <p>Help</p>
+                            </div>
+                        </router-link>
+
+                        <!-- User settings -->
                         <router-link
                             to="/profile/profileTwo"
                             tag="li"
@@ -81,26 +139,15 @@ let handleWindowResize = () => {
                         >
                             <div class="nav-item-hold">
                                 <i class="i-Find-User text-3xl"></i>
-                                <p>Profile</p>
-                            </div>
-                        </router-link> -->
-                        <!-- <router-link to="/signIn" tag="li" class="nav-item">
-                            <div class="nav-item-hold">
-                                <i class="i-Checked-User text-3xl"></i>
-                                <p>Sign In</p>
+                                <p>Settings</p>
                             </div>
                         </router-link>
-                        <router-link to="/signUp" tag="li" class="nav-item">
-                            <div class="nav-item-hold">
-                                <i class="i-Checked-User text-3xl"></i>
-                                <p>Sign Up</p>
-                            </div>
-                        </router-link> -->
 
-                        <a href="http://localhost:8000/docs#/" tag="a" class="nav-item" target="_blank">
+                        <!-- API Documentation -->
+                        <a href="http://localhost:8002/docs" tag="a" class="nav-item" target="_blank">
                             <div class="nav-item-hold">
                                 <i class="i-File-Word text-3xl"></i>
-                                <p>Doc</p>
+                                <p>API Docs</p>
                             </div>
                         </a>
                     </ul>
