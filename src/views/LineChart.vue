@@ -31,7 +31,7 @@ export default {
           type: 'line',
           data: {
             labels: props.data.map(item => item.date),
-            datasets: [
+            datasets: [ 
               {
                 label: 'Cutting',
                 data: props.data.map(item => item.count),
