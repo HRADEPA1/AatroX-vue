@@ -67,8 +67,8 @@
         <div class="p-6">
           <div class="flex justify-between items-start mb-4">
             <div class="flex-1">
-              <h3 class="text-lg font-semibold">{{ machine.custom_name || machine.model }}</h3>
-              <p class="text-sm text-gray-600">{{ machine.model }}</p>
+              <h3 class="text-lg font-semibold">{{ machine.machine_name || machine.machine?.model }}</h3>
+              <p class="text-sm text-gray-600">{{ machine.machine?.model }}</p>
             </div>
             <span 
               :class="['status-badge', `status-${getStatus(machine)}`]"
@@ -162,8 +162,8 @@ export default {
       if (filters.value.search) {
         const search = filters.value.search.toLowerCase();
         filtered = filtered.filter(m => 
-          (m.custom_name && m.custom_name.toLowerCase().includes(search)) ||
-          (m.model && m.model.toLowerCase().includes(search)) ||
+          (m.machine_name && m.machine_name.toLowerCase().includes(search)) ||
+          (m.machine?.model && m.machine.model.toLowerCase().includes(search)) ||
           (m.location && m.location.toLowerCase().includes(search))
         );
       }
@@ -224,7 +224,7 @@ export default {
 
     const deleteMachine = async (id) => {
       const machine = machines.value.find(m => m.id === id);
-      if (!confirm(`Are you sure you want to remove ${machine.custom_name || machine.model}?`)) {
+      if (!confirm(`Are you sure you want to remove ${machine.machine_name || machine.machine?.model}?`)) {
         return;
       }
 

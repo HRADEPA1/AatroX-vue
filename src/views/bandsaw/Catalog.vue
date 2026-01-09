@@ -35,6 +35,16 @@
           />
         </div>
       </div>
+      <div class="mt-4">
+        <label class="inline-flex items-center cursor-pointer">
+          <input 
+            v-model="filters.cnc" 
+            type="checkbox" 
+            class="form-checkbox h-5 w-5 text-blue-600"
+          />
+          <span class="ml-2 text-sm font-medium">CNC Machines Only</span>
+        </label>
+      </div>
     </div>
 
     <!-- Machine Grid -->
@@ -155,7 +165,8 @@ export default {
     const filters = ref({
       manufacturer: '',
       orientation: '',
-      search: ''
+      search: '',
+      cnc: false
     });
 
     const filteredMachines = computed(() => {
@@ -166,6 +177,12 @@ export default {
         filtered = filtered.filter(m => 
           m.model.toLowerCase().includes(search) ||
           (m.manufacturer?.name || '').toLowerCase().includes(search)
+        );
+      }
+
+      if (filters.value.cnc) {
+        filtered = filtered.filter(m => 
+          m.model.toLowerCase().includes('cnc')
         );
       }
 

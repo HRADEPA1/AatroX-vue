@@ -22,8 +22,8 @@
         </button>
         <div class="flex items-start justify-between">
           <div>
-            <h1 class="text-3xl font-bold">{{ machine.custom_name || machine.model }}</h1>
-            <p class="text-gray-600 mt-2">{{ machine.model }} - {{ machine.manufacturer_name }}</p>
+            <h1 class="text-3xl font-bold">{{ machine.machine_name || machine.machine?.model }}</h1>
+            <p class="text-gray-600 mt-2">{{ machine.machine?.model }} - {{ machine.machine?.manufacturer?.name }}</p>
           </div>
           <span :class="['status-badge', `status-${getStatus()}`]">
             {{ getStatus() }}
@@ -40,9 +40,9 @@
             <form @submit.prevent="saveConfiguration">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="form-label">Custom Name</label>
+                  <label class="form-label">Machine Name</label>
                   <input 
-                    v-model="form.custom_name" 
+                    v-model="form.machine_name" 
                     type="text" 
                     class="form-input w-full"
                     placeholder="e.g., Workshop Machine #1"
@@ -128,7 +128,7 @@
                   v-model.number="form.custom_max_material_width" 
                   type="number" 
                   class="form-input w-full"
-                  :placeholder="machine.max_material_width"
+                  :placeholder="machine.machine?.max_cutting_width"
                 />
               </div>
               <div>
@@ -137,7 +137,7 @@
                   v-model.number="form.custom_max_material_height" 
                   type="number" 
                   class="form-input w-full"
-                  :placeholder="machine.max_material_height"
+                  :placeholder="machine.machine?.max_cutting_height"
                 />
               </div>
               <div>
@@ -147,7 +147,7 @@
                   type="number" 
                   class="form-input w-full"
                   step="0.1"
-                  :placeholder="machine.max_blade_speed"
+                  :placeholder="machine.machine?.band_speed_max"
                 />
               </div>
               <div>
@@ -157,7 +157,7 @@
                   type="number" 
                   class="form-input w-full"
                   step="0.1"
-                  :placeholder="machine.max_feed_rate"
+                  :placeholder="machine.machine?.cutting_feed_max"
                 />
               </div>
             </div>
@@ -250,21 +250,37 @@
             <div class="space-y-3 text-sm">
               <div class="flex justify-between">
                 <span class="text-gray-600">Model</span>
-                <span class="font-medium">{{ machine.model }}</span>
+                <span class="font-medium">{{ machine.machine?.model }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">Manufacturer</span>
-                <span class="font-medium">{{ machine.manufacturer_name }}</span>
+                <span class="font-medium">{{ machine.machine?.manufacturer?.name }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">Orientation</span>
-                <span class="font-medium capitalize">{{ machine.orientation }}</span>
+                <span class="font-medium capitalize">{{ machine.machine?.orientation }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">NC Control</span>
-                <span :class="machine.has_nc_control ? 'text-green-600' : 'text-gray-400'">
-                  {{ machine.has_nc_control ? 'Yes' : 'No' }}
+                <span :class="machine.machine?.nc_control_type ? 'text-green-600' : 'text-gray-400'">
+                  {{ machine.machine?.nc_control_type || 'No' }}
                 </span>
+              </div>
+              <div v-if="machine.machine?.max_cutting_width" class="flex justify-between">
+                <span class="text-gray-600">Max Width</span>
+                <span class="font-medium">{{ machine.machine.max_cutting_width }} mm</span>
+              </div>
+              <div v-if="machine.machine?.max_cutting_height" class="flex justify-between">
+                <span class="text-gray-600">Max Height</span>
+                <span class="font-medium">{{ machine.machine.max_cutting_height }} mm</span>
+              </div>
+              <div v-if="machine.machine?.band_speed_min && machine.machine?.band_speed_max" class="flex justify-between">
+                <span class="text-gray-600">Band Speed</span>
+                <span class="font-medium">{{ machine.machine.band_speed_min }}-{{ machine.machine.band_speed_max }} m/min</span>
+              </div>
+              <div v-if="machine.machine?.cutting_feed_max" class="flex justify-between">
+                <span class="text-gray-600">Cutting Feed</span>
+                <span class="font-medium">0-{{ machine.machine.cutting_feed_max }} mm/min</span>
               </div>
             </div>
           </div>
@@ -373,7 +389,7 @@ export default {
     const showMaintenanceModal = ref(false);
 
     const form = reactive({
-      custom_name: '',
+      machine_name: '',
       location: '',
       description: '',
       is_active: true,
@@ -466,7 +482,7 @@ export default {
     };
 
     const deleteMachine = async () => {
-      if (!confirm(`Remove ${machine.value.custom_name || machine.value.model}?`)) {
+      if (!confirm(`Remove ${machine.value.machine_name || machine.value.machine?.model}?`)) {
         return;
       }
 

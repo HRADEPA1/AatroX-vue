@@ -31,6 +31,17 @@ const routes = [
                 },
                 children: [
                     {
+                        path: '',
+                        name: 'dashboard-default',
+                        redirect: 'grafana',
+                    },
+                    {
+                        path: 'grafana',
+                        name: 'dashboard-grafana',
+                        component: () =>
+                            import('../views/management/Dashboards.vue'),
+                    },
+                    {
                         path: 'dashboard-version-one',
                         name: 'dashboard-version-one',
                         component: () =>
@@ -53,6 +64,22 @@ const routes = [
                 component: () => import('../views/management/index.vue'),
                 meta: {
                     title: 'Management',
+                },
+            },
+            {
+                path: '/management/datasources',
+                name: 'Datasources',
+                component: () => import('../views/management/Datasources.vue'),
+                meta: {
+                    title: 'Datasources',
+                },
+            },
+            {
+                path: '/management/dashboards',
+                name: 'ManagementDashboards',
+                component: () => import('../views/management/Dashboards.vue'),
+                meta: {
+                    title: 'Dashboards',
                 },
             },
             // Notifications

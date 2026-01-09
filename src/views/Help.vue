@@ -9,7 +9,7 @@
       <div class="help-section bg-white p-6 rounded-lg shadow mb-6">
         <h2 class="text-xl font-semibold mb-4">Quick Links</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="http://localhost:8002/docs" target="_blank" class="help-link">
+          <a :href="apiDocsUrl" target="_blank" class="help-link">
             <i class="i-File-Word text-2xl text-blue-500 mr-3"></i>
             <div>
               <h3 class="font-semibold">API Documentation</h3>
@@ -113,6 +113,11 @@
 <script>
 export default {
   name: 'Help',
+  data() {
+    return {
+      apiDocsUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/docs#/`
+    };
+  }
 };
 </script>
 
