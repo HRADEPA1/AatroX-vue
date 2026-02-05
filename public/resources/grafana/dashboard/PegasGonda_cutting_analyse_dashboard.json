@@ -59,7 +59,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -69,7 +70,65 @@
           },
           "unitScale": true
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "date"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "time: DD-MM-YY"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ProductionTime"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "OffTime"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DownTime"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -96,7 +155,8 @@
           "mode": "single",
           "sort": "none"
         },
-        "xTickLabelRotation": 0,
+        "xField": "date",
+        "xTickLabelRotation": 45,
         "xTickLabelSpacing": 0
       },
       "pluginVersion": "10.3.1",
@@ -107,28 +167,8 @@
             "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
           },
           "hide": false,
-          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"name\"] == \"Diagnostics_DB.Timers.General.Power_on.Minutes\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> aggregateWindow(every: 1d, fn: count, createEmpty: false)\n    |> map(fn: (r) => ({ r with _value: r._value / 60 }))  // Convert minutes to hours\n  |> yield(name: \"process_time\")\n",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
-          },
-          "hide": false,
-          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"name\"] == \"Diagnostics_DB.Cutting.Overall_cuts\")\n  |> filter(fn: (r) => r[\"dataType\"] == \"DInt\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> aggregateWindow(every: 1d, fn: spread, createEmpty: false)\n  |> yield(name: \"cuts\")\n",
+          "query": "// --------- PowerOn minutes/day (seconds == 59 occurs once per ON-minute) ----------\npowerOnDaily =\n  from(bucket: \"machine_data\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"pegas_data\")\n//    |> filter(fn: (r) => r.topic =~ /^Pegas-Gonda\\/CloudConnector\\/ie\\/d\\/j\\/simatic\\/v1\\/s7c1\\/dp\\/r\\/(${device:regex})\\/default$/)\n    |> filter(fn: (r) => r.name == \"Diagnostics_DB.Timers.General.ActualPowerOn.Seconds\")\n    |> filter(fn: (r) => r._field == \"val\")\n    |> filter(fn: (r) => r._value == 59)\n    |> aggregateWindow(every: 1d, offset: 1s, fn: count, createEmpty: false)\n    |> rename(columns: {_value: \"powerOnMin\"})\n    |> keep(columns: [\"_time\", \"topic\", \"powerOnMin\"])\n\n// --------- Production minutes/day (minute has production if Overall_cuts increased) ----------\nprodDaily =\n  from(bucket: \"machine_data\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"pegas_data\")\n//    |> filter(fn: (r) => r.topic =~ /^Pegas-Gonda\\/CloudConnector\\/ie\\/d\\/j\\/simatic\\/v1\\/s7c1\\/dp\\/r\\/(${device:regex})\\/default$/)\n    |> filter(fn: (r) => r.name == \"Diagnostics_DB.Cutting.Overall_cuts\")\n    |> filter(fn: (r) => r._field == \"val\")\n    |> aggregateWindow(every: 1m, offset: 1s, fn: last, createEmpty: false)\n    |> difference(nonNegative: true)\n    |> map(fn: (r) => ({ r with _value: if r._value > 0.0 then 1.0 else 0.0 })) // 1 = producing in that minute\n    |> aggregateWindow(every: 1d, offset: 1s, fn: sum, createEmpty: false)\n    |> rename(columns: {_value: \"prodMin\"})\n    |> keep(columns: [\"_time\", \"topic\", \"prodMin\"])\n\n// --------- Join + compute ProductionTime / DownTime / OffTime (hours) ----------\njoin(tables: {p: powerOnDaily, pr: prodDaily}, on: [\"_time\", \"topic\"])\n  |> map(fn: (r) => {\n      powerOnMin = float(v: r.powerOnMin)\n      prodMin = float(v: r.prodMin)\n\n      // clamp to avoid negatives if clocks/data jitter\n      prodMin2 = if prodMin > powerOnMin then powerOnMin else prodMin\n      downMin = if powerOnMin - prodMin2 < 0.0 then 0.0 else (powerOnMin - prodMin2)\n\n      // Off minutes = 1440 - powerOnMin (see DST note below)\n      offMin = if 1440.0 - powerOnMin < 0.0 then 0.0 else (1440.0 - powerOnMin)\n\n      return {\n        date: r._time,\n        ProductionTime: prodMin2 / 60.0,\n        DownTime: downMin / 60.0,\n        OffTime: offMin / 60.0\n      }\n    })\n  |> keep(columns: [\"date\", \"ProductionTime\", \"DownTime\", \"OffTime\", \"topic\"])\n  |> yield(name: \"daily_times\")",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "name": "Expression",
-            "type": "__expr__",
-            "uid": "__expr__"
-          },
-          "expression": "$A/$B",
-          "hide": false,
-          "refId": "Efectivity",
-          "type": "math"
         }
       ],
       "title": "Effectivity = Cuts / Cutting time",
@@ -136,15 +176,22 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*_DB.*\\.(.*)\",.*",
-            "renamePattern": "$1"
+            "regex": ".*_DB.*\\.(.*)\",.*Connector\\/(.*).+",
+            "renamePattern": "$2 - $1"
           }
         },
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(Minutes)",
+            "regex": ".*(Minutes).*",
             "renamePattern": "Hours"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "ie\\/d\\/j\\/simatic\\/v1\\/s7c1\\/dp\\/r\\/(.*)\\/.*",
+            "renamePattern": "$1"
           }
         }
       ],
@@ -198,7 +245,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -289,7 +337,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "dark-red"
+                "color": "dark-red",
+                "value": null
               },
               {
                 "color": "#EAB839",
@@ -424,7 +473,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -525,7 +575,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -563,7 +614,7 @@
             "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
           },
           "hide": false,
-          "query": "from(bucket: \"machine_data\")  \n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"name\"] == \"DB_KKR_control.Actual_deviation\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> derivative(unit: 1s, nonNegative: false)\n  |> map(fn: (r) => ({ r with _value: r._value * 1000000.0 }))  // Scale the result\n  |> yield(name: \"derivative_scaled\")\n\nfrom(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"name\"] == \"HMI_DB.Automat_mode.Band_speed\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> yield(name: \"band_speed\")\n\nfrom(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"name\"] == \"HMI_DB.Automat_mode.Cutting_speed\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> yield(name: \"cutting_speed\")",
+          "query": "from(bucket: \"machine_data\")  \n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"name\"] == \"DB_KKR_control.Actual_deviation\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> derivative(unit: 1s, nonNegative: false)\n  |> map(fn: (r) => ({ r with _value: r._value * 1000000.0 }))  // Scale the result\n//  |> yield(name: \"derivative_scaled\")",
           "refId": "A"
         }
       ],
@@ -572,7 +623,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "^.*\\.(.*)\",.*$",
+            "regex": ".*ie\\/d\\/j\\/simatic\\/v1\\/s7c1\\/dp\\/r\\/(.*)\\/.*",
             "renamePattern": "$1"
           }
         }
@@ -603,7 +654,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -643,7 +695,17 @@
             "type": "influxdb",
             "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
           },
-          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> filter(fn: (r) => r[\"id\"] == \"110\" or r[\"id\"] == \"111\" or r[\"id\"] == \"112\" or r[\"id\"] == \"113\" or r[\"id\"] == \"114\" or r[\"id\"] == \"115\" or r[\"id\"] == \"116\" or r[\"id\"] == \"117\" or r[\"id\"] == \"118\" or r[\"id\"] == \"119\" or r[\"id\"] == \"120\" or r[\"id\"] == \"121\" or r[\"id\"] == \"122\")\n  |> filter(fn: (r) => r._value == 1)\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)\n  |> rename(columns: { _value: \"error_state\", _time: \"error_time\" })",
+          "hide": true,
+          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> filter(fn: (r) =>\n      r[\"id\"] == \"110\" or r[\"id\"] == \"111\" or r[\"id\"] == \"112\" or\n      r[\"id\"] == \"113\" or r[\"id\"] == \"114\" or r[\"id\"] == \"115\" or\n      r[\"id\"] == \"116\" or r[\"id\"] == \"117\" or r[\"id\"] == \"118\" or\n      r[\"id\"] == \"119\" or r[\"id\"] == \"120\" or r[\"id\"] == \"121\" or\n      r[\"id\"] == \"122\"\n  )\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
+          },
+          "hide": true,
+          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> filter(fn: (r) => r[\"id\"] == \"110\" or r[\"id\"] == \"111\" or r[\"id\"] == \"112\" or r[\"id\"] == \"113\" or r[\"id\"] == \"114\" or r[\"id\"] == \"115\" or r[\"id\"] == \"116\" or r[\"id\"] == \"117\" or r[\"id\"] == \"118\" or r[\"id\"] == \"119\" or r[\"id\"] == \"120\" or r[\"id\"] == \"121\" or r[\"id\"] == \"122\")\n  |> filter(fn: (r) => r._value == 1)\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)\n  |> rename(columns: { _value: \"error_state\", _time: \"error_time\" })  ",
           "refId": "A"
         },
         {
@@ -652,7 +714,7 @@
             "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
           },
           "hide": false,
-          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> filter(fn: (r) => r[\"id\"] == \"110\" or r[\"id\"] == \"111\" or r[\"id\"] == \"112\" or r[\"id\"] == \"113\" or r[\"id\"] == \"114\" or r[\"id\"] == \"115\" or r[\"id\"] == \"116\" or r[\"id\"] == \"117\" or r[\"id\"] == \"118\" or r[\"id\"] == \"119\" or r[\"id\"] == \"120\" or r[\"id\"] == \"121\" or r[\"id\"] == \"122\")\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)\n  |> rename(columns: { _value: \"actual_state\", _time: \"actual_time\" })",
+          "query": "from(bucket: \"machine_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"pegas_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"val\")\n  |> filter(fn: (r) => r[\"id\"] == \"110\" or r[\"id\"] == \"111\" or r[\"id\"] == \"112\" or r[\"id\"] == \"113\" or r[\"id\"] == \"114\" or r[\"id\"] == \"115\" or r[\"id\"] == \"116\" or r[\"id\"] == \"117\" or r[\"id\"] == \"118\" or r[\"id\"] == \"119\" or r[\"id\"] == \"120\" or r[\"id\"] == \"121\" or r[\"id\"] == \"122\")\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)",
           "refId": "B"
         }
       ],
@@ -661,7 +723,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*System_Messages_DB.Errors.(.*)\",.*",
+            "regex": ".*name=\"(.*)\",.*",
             "renamePattern": "$1"
           }
         }
@@ -675,26 +737,25 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 2,
-          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
-          "unit": "none",
-          "unitScale": false
+          "unitScale": true
         },
         "overrides": []
       },
@@ -706,20 +767,19 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^val \\{dataType=\"Int\", environment=\"production\", host=\"f426f280de13\", id=\"134\", name=\"Diagnostics_DB\\.Timers\\.General\\.Power_on\\.Minutes\", topic=\"Pegas\\-Gonda/CloudConnector/\"\\}$/",
+          "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
       "pluginVersion": "10.3.1",
       "targets": [
@@ -733,8 +793,23 @@
         }
       ],
       "title": "Power on total (hour)",
-      "transformations": [],
-      "type": "stat"
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": ".*_DB.*\\.(.*)\",.*Connector\\/(.*).+",
+            "renamePattern": "$2"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "ie/d/j/simatic/v1/s7c1/dp/r/(.*)/.*",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "gauge"
     }
   ],
   "refresh": "",
@@ -766,17 +841,68 @@
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
+      },
+      {
+        "allValue": "",
+        "current": {
+          "selected": false,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "aa8dda4d-edd1-4d46-8e3b-f6c06c741c1e"
+        },
+        "definition": "import \"strings\"\n\nfrom(bucket: \"machine_data\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"pegas_data\")\n  |> keep(columns: [\"topic\"])\n  |> distinct(column: \"topic\")\n  |> map(fn: (r) => ({\n      device: strings.replaceAll(\n        v: strings.replaceAll(\n          v: strings.split(v: r.topic, t: \"/dp/r/\")[1],\n          t: \"/default\",\n          u: \"\"\n        ),\n        t: \"/\",\n        u: \"\"\n      )\n  }))\n  |> keep(columns: [\"device\"])\n  |> distinct(column: \"device\")\n  |> sort(columns: [\"device\"])",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Devices",
+        "multi": true,
+        "name": "device",
+        "options": [],
+        "query": "import \"strings\"\n\nfrom(bucket: \"machine_data\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"pegas_data\")\n  |> keep(columns: [\"topic\"])\n  |> distinct(column: \"topic\")\n  |> map(fn: (r) => ({\n      device: strings.replaceAll(\n        v: strings.replaceAll(\n          v: strings.split(v: r.topic, t: \"/dp/r/\")[1],\n          t: \"/default\",\n          u: \"\"\n        ),\n        t: \"/\",\n        u: \"\"\n      )\n  }))\n  |> keep(columns: [\"device\"])\n  |> distinct(column: \"device\")\n  |> sort(columns: [\"device\"])",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Pegas-Gonda/CloudConnector/ie/d/j/simatic/v1/s7c1/dp/r/",
+          "value": "Pegas-Gonda/CloudConnector/ie/d/j/simatic/v1/s7c1/dp/r/"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "name": "topicPrefix",
+        "options": [
+          {
+            "selected": true,
+            "text": "Pegas-Gonda/CloudConnector/ie/d/j/simatic/v1/s7c1/dp/r/",
+            "value": "Pegas-Gonda/CloudConnector/ie/d/j/simatic/v1/s7c1/dp/r/"
+          }
+        ],
+        "query": "Pegas-Gonda/CloudConnector/ie/d/j/simatic/v1/s7c1/dp/r/",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
       }
     ]
   },
   "time": {
-    "from": "now-30d",
+    "from": "now-90d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Pegas Gonda cutting analyse",
   "uid": "b8d512fd-4136-4604-a0c2-eefcafafaeac",
-  "version": 16,
+  "version": 29,
   "weekStart": ""
 }

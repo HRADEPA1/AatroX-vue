@@ -17,6 +17,8 @@
                         <option value="-24h">Last 24 Hours</option>
                         <option value="-7d">Last 7 Days</option>
                         <option value="-30d">Last 30 Days</option>
+                        <option value="-90d">Last 90 Days</option>
+                        <option value="-365d">Last 365 Days</option>
                     </select>
                 </div>
             </div>
@@ -124,7 +126,7 @@ export default {
 <style scoped>
 .dashboard-page {
     padding: 2rem;
-    max-width: 1600px;
+    max-width: 1600px;  
     margin: 0 auto;
 }
 

@@ -32,11 +32,11 @@
       <!-- Validation Status -->
       <div class="card p-6 bg-white rounded-lg shadow">
         <div class="flex items-center mb-4">
-          <i :class="['text-4xl mr-3', validationStatus.valid ? 'i-Checked text-green-500' : 'i-Close text-red-500']"></i>
+          <i :class="['text-4xl mr-3', isConfigValid ? 'i-Checked text-green-500' : 'i-Close text-red-500']"></i>
           <div>
             <h2 class="text-xl font-semibold">Configuration Status</h2>
-            <p :class="['text-sm', validationStatus.valid ? 'text-green-600' : 'text-red-600']">
-              {{ validationStatus.valid ? 'All datasources configured and valid' : 'Configuration incomplete or invalid' }}
+            <p :class="['text-sm', isConfigValid ? 'text-green-600' : 'text-red-600']">
+              {{ isConfigValid ? 'All datasources configured and valid' : 'Configuration incomplete or invalid' }}
             </p>
           </div>
         </div>
@@ -272,6 +272,11 @@ bucket = "${this.clientConfig.bucket}"`;
     formatGrafanaConfig() {
       if (!this.grafanaConfig) return '';
       return JSON.stringify(this.grafanaConfig, null, 2);
+    },
+    isConfigValid() {
+      if (!this.validationStatus) return false;
+      return this.validationStatus.status === 'valid' && 
+             Object.values(this.validationStatus.datasources || {}).every(v => v === true);
     }
   },
   mounted() {

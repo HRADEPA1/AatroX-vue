@@ -132,7 +132,7 @@ let handleWindowResize = () => {
                         </router-link>
 
                         <!-- User settings -->
-                        <router-link
+                        <!-- <router-link
                             to="/profile/profileTwo"
                             tag="li"
                             class="nav-item"
@@ -141,10 +141,10 @@ let handleWindowResize = () => {
                                 <i class="i-Find-User text-3xl"></i>
                                 <p>Settings</p>
                             </div>
-                        </router-link>
+                        </router-link> -->
 
                         <!-- API Documentation -->
-                        <a href="http://localhost:8002/docs" tag="a" class="nav-item" target="_blank">
+                        <a href="http://localhost:8005/docs" tag="a" class="nav-item" target="_blank">
                             <div class="nav-item-hold">
                                 <i class="i-File-Word text-3xl"></i>
                                 <p>API Docs</p>

@@ -111,11 +111,13 @@
 </template>
 
 <script>
+import { API_BASE_URL } from '@/api/api.js';
+
 export default {
   name: 'Help',
   data() {
     return {
-      apiDocsUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/docs#/`
+      apiDocsUrl: `${API_BASE_URL}/docs#/`
     };
   }
 };

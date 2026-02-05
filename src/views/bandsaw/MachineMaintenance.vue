@@ -302,7 +302,7 @@ export default {
 
     const loadMachine = async () => {
       try {
-        const response = await axios.get(`/api/machines/${route.params.id}`);
+        const response = await axios.get(`${API_BASE_URL}/api/machines/${route.params.id}`);
         machine.value = response.data;
       } catch (error) {
         console.error('Failed to load machine:', error);
@@ -313,7 +313,7 @@ export default {
     const loadMaintenanceRecords = async () => {
       loading.value = true;
       try {
-        const response = await axios.get(`/api/machines/${route.params.id}/maintenance`);
+        const response = await axios.get(`${API_BASE_URL}/api/machines/${route.params.id}/maintenance`);
         maintenanceRecords.value = response.data.sort((a, b) => 
           new Date(b.maintenance_date) - new Date(a.maintenance_date)
         );
@@ -350,12 +350,12 @@ export default {
       try {
         if (editingRecord.value) {
           await axios.put(
-            `/api/machines/${route.params.id}/maintenance/${editingRecord.value.id}`,
+            `${API_BASE_URL}/api/machines/${route.params.id}/maintenance/${editingRecord.value.id}`,
             recordForm
           );
         } else {
           await axios.post(
-            `/api/machines/${route.params.id}/maintenance`,
+            `${API_BASE_URL}/api/machines/${route.params.id}/maintenance`,
             recordForm
           );
         }
@@ -371,7 +371,7 @@ export default {
       if (!confirm('Delete this maintenance record?')) return;
 
       try {
-        await axios.delete(`/api/machines/${route.params.id}/maintenance/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/machines/${route.params.id}/maintenance/${id}`);
         loadMaintenanceRecords();
       } catch (error) {
         console.error('Failed to delete record:', error);

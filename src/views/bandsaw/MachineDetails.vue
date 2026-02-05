@@ -38,7 +38,7 @@
             <div class="machine-image bg-gray-100 rounded-lg flex items-center justify-center" style="height: 400px;">
               <img 
                 v-if="machine.image_url" 
-                :src="machine.image_url" 
+                :src="getImageUrl(machine.image_url)" 
                 :alt="machine.model"
                 class="max-h-full max-w-full object-contain"
               />
@@ -216,6 +216,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { API_BASE_URL } from '@/api/api.js';
 
 export default {
   name: 'MachineDetails',
@@ -228,7 +229,7 @@ export default {
     const loadMachine = async () => {
       loading.value = true;
       try {
-        const response = await axios.get(`/api/catalog/machines/${route.params.id}`);
+        const response = await axios.get(`${API_BASE_URL}/api/catalog/machines/${route.params.id}`);
         machine.value = response.data;
       } catch (error) {
         console.error('Failed to load machine:', error);
@@ -240,7 +241,7 @@ export default {
 
     const addToMyMachines = async () => {
       try {
-        await axios.post('/api/machines', {
+        await axios.post(`${API_BASE_URL}/api/machines`, {
           machine_id: machine.value.id,
           custom_name: machine.value.model,
           location: 'Workshop'
@@ -253,6 +254,14 @@ export default {
       }
     };
 
+    const getImageUrl = (imagePath) => {
+      if (!imagePath) return '';
+      // If it's already a full URL, return it
+      if (imagePath.startsWith('http')) return imagePath;
+      // Otherwise prepend the API base URL
+      return `${API_BASE_URL}${imagePath}`;
+    };
+
     onMounted(() => {
       loadMachine();
     });
@@ -260,7 +269,8 @@ export default {
     return {
       loading,
       machine,
-      addToMyMachines
+      addToMyMachines,
+      getImageUrl
     };
   }
 };

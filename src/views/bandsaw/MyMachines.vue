@@ -133,6 +133,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { API_BASE_URL } from '@/api/api.js';
 
 export default {
   name: 'MyMachines',
@@ -174,7 +175,7 @@ export default {
     const loadMachines = async () => {
       loading.value = true;
       try {
-        const response = await axios.get('/api/machines');
+        const response = await axios.get(`${API_BASE_URL}/api/machines`);
         machines.value = response.data;
         
         // Extract unique locations
@@ -229,7 +230,7 @@ export default {
       }
 
       try {
-        await axios.delete(`/api/machines/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/machines/${id}`);
         machines.value = machines.value.filter(m => m.id !== id);
       } catch (error) {
         console.error('Failed to delete machine:', error);

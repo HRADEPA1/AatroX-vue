@@ -377,6 +377,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { API_BASE_URL } from '@/api/api.js';
 
 export default {
   name: 'MachineConfiguration',
@@ -415,7 +416,7 @@ export default {
     const loadMachine = async () => {
       loading.value = true;
       try {
-        const response = await axios.get(`/api/machines/${route.params.id}`);
+        const response = await axios.get(`${API_BASE_URL}/api/machines/${route.params.id}`);
         machine.value = response.data;
         
         // Populate form
@@ -437,7 +438,7 @@ export default {
 
     const loadMaintenanceHistory = async () => {
       try {
-        const response = await axios.get(`/api/machines/${route.params.id}/maintenance`);
+        const response = await axios.get(`${API_BASE_URL}/api/machines/${route.params.id}/maintenance`);
         maintenanceHistory.value = response.data;
       } catch (error) {
         console.error('Failed to load maintenance history:', error);
@@ -446,7 +447,7 @@ export default {
 
     const saveConfiguration = async () => {
       try {
-        await axios.put(`/api/machines/${route.params.id}`, form);
+        await axios.put(`${API_BASE_URL}/api/machines/${route.params.id}`, form);
         alert('Configuration saved successfully!');
         loadMachine();
       } catch (error) {
@@ -458,7 +459,7 @@ export default {
     const addMaintenanceRecord = async () => {
       try {
         await axios.post(
-          `/api/machines/${route.params.id}/maintenance`,
+          `${API_BASE_URL}/api/machines/${route.params.id}/maintenance`,
           maintenanceForm
         );
         showMaintenanceModal.value = false;
@@ -487,7 +488,7 @@ export default {
       }
 
       try {
-        await axios.delete(`/api/machines/${route.params.id}`);
+        await axios.delete(`${API_BASE_URL}/api/machines/${route.params.id}`);
         router.push('/my-machines');
       } catch (error) {
         console.error('Failed to delete machine:', error);
