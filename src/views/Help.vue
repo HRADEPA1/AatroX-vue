@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <!-- User Guide -->
+      <!-- User Manual Content -->
       <div class="help-section bg-white p-6 rounded-lg shadow mb-6">
         <h2 class="text-xl font-semibold mb-4">User Guide</h2>
         <div class="space-y-4">
@@ -66,6 +66,11 @@
         </div>
       </div>
 
+      <div class="help-section bg-white p-6 rounded-lg shadow mb-6">
+        <div class="markdown-content" v-html="userManualHtml"></div>
+      </div>
+       
+
       <!-- Technical Specifications -->
       <div class="help-section bg-white p-6 rounded-lg shadow mb-6">
         <h2 class="text-xl font-semibold mb-4">Technical Specifications</h2>
@@ -103,7 +108,7 @@
         <div class="space-y-2 text-gray-600">
           <p><strong>Email:</strong> support@pegasgonda.local</p>
           <p><strong>Documentation:</strong> README_BANDSAW.md</p>
-          <p><strong>Version:</strong> 2.0.0</p>
+          <p><strong>Version:</strong> {{ version }}</p>
         </div>
       </div>
     </div>
@@ -112,13 +117,70 @@
 
 <script>
 import { API_BASE_URL } from '@/api/api.js';
+import packageInfo from '../../package.json';
 
 export default {
   name: 'Help',
   data() {
     return {
-      apiDocsUrl: `${API_BASE_URL}/docs#/`
+      apiDocsUrl: `${API_BASE_URL}/docs#/`,
+      userManualHtml: '',
+      version: packageInfo.version
     };
+  },
+  async mounted() {
+    await this.loadUserManual();
+  },
+  methods: {
+    async loadUserManual() {
+      try {
+        const response = await fetch('/USER_MANUAL.md');
+        const markdown = await response.text();
+        this.userManualHtml = this.parseMarkdown(markdown);
+      } catch (error) {
+        console.error('Failed to load user manual:', error);
+        this.userManualHtml = '<p class="text-red-500">Failed to load user manual documentation.</p>';
+      }
+    },
+    parseMarkdown(markdown) {
+      // Simple markdown to HTML parser
+      let html = markdown;
+      
+      // Headers
+      html = html.replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-6 mb-3">$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mt-8 mb-4 text-blue-600">$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-8 mb-6">$1</h1>');
+      
+      // Bold and italic
+      html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-red-600">$1</code>');
+      
+      // Code blocks
+      html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>$2</code></pre>');
+      
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank">$1</a>');
+      
+      // Lists
+      html = html.replace(/^\d+\.\s+(.*)$/gim, '<li class="ml-6">$1</li>');
+      html = html.replace(/^[-*]\s+(.*)$/gim, '<li class="ml-6">$1</li>');
+      html = html.replace(/(<li.*<\/li>)/s, '<ul class="list-disc space-y-2 my-3">$1</ul>');
+      
+      // Paragraphs
+      html = html.split('\n\n').map(para => {
+        if (para.trim().startsWith('<h') || para.trim().startsWith('<ul') || 
+            para.trim().startsWith('<pre') || para.trim().startsWith('<li')) {
+          return para;
+        }
+        return para.trim() ? `<p class="my-3 text-gray-700">${para}</p>` : '';
+      }).join('\n');
+      
+      return html;
+    }
   }
 };
 </script>
@@ -126,7 +188,7 @@ export default {
 <style scoped>
 .help-page {
   padding: 2rem;
-  max-width: 1000px;
+  max-width: 1200px;
 }
 
 .help-link {
@@ -149,5 +211,73 @@ export default {
   padding: 1rem;
   background: #f9fafb;
   border-radius: 6px;
+}
+
+.markdown-content {
+  line-height: 1.7;
+}
+
+.markdown-content :deep(h1) {
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.markdown-content :deep(h2) {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3rem;
+}
+
+.markdown-content :deep(code) {
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content :deep(pre) {
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.markdown-content :deep(ul) {
+  padding-left: 1.5rem;
+}
+
+.markdown-content :deep(ol) {
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content :deep(a) {
+  text-decoration: underline;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.markdown-content :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.markdown-content :deep(th) {
+  background-color: #f9fafb;
+  font-weight: 600;
 }
 </style>

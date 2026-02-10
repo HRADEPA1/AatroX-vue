@@ -68,7 +68,7 @@ export default {
             dashboard: null,
             panels: [],
             timeRange: {
-                start: '-7d',
+                start: '-90d',
                 stop: 'now()'
             }
         };
