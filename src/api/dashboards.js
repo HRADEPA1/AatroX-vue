@@ -220,6 +220,68 @@ export const downloadDashboard = async (dashboardId) => {
     }
 };
 
+// ============================================================
+// Panel Visibility Settings API
+// ============================================================
+
+/**
+ * Get all panel visibility settings from backend
+ */
+export const getAllPanelVisibility = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/api/dashboards/settings/panel-visibility`);
+        return response.data;
+    } catch (error) {
+        console.error('Error loading panel visibility settings:', error);
+        return {};
+    }
+};
+
+/**
+ * Get panel visibility settings for a specific dashboard
+ */
+export const getPanelVisibility = async (dashboardId) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/api/dashboards/settings/panel-visibility/${dashboardId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error loading panel visibility for dashboard:', error);
+        return {};
+    }
+};
+
+/**
+ * Save panel visibility settings for a specific dashboard
+ */
+export const savePanelVisibility = async (dashboardId, visibility) => {
+    try {
+        const response = await axios.put(
+            `${API_BASE_URL}/api/dashboards/settings/panel-visibility/${dashboardId}`,
+            visibility
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error saving panel visibility:', error);
+        throw error;
+    }
+};
+
+/**
+ * Save all panel visibility settings at once
+ */
+export const saveAllPanelVisibility = async (allVisibility) => {
+    try {
+        const response = await axios.put(
+            `${API_BASE_URL}/api/dashboards/settings/panel-visibility`,
+            allVisibility
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error saving all panel visibility:', error);
+        throw error;
+    }
+};
+
 /**
  * Parse Grafana dashboard and extract panels
  */

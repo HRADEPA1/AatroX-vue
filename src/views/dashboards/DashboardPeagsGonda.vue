@@ -39,15 +39,22 @@
         </div>
 
         <!-- Dashboard Grid -->
-        <div v-else-if="panels.length > 0" class="dashboard-grid">
+        <div v-else-if="visiblePanels.length > 0" class="dashboard-grid">
             <div
-                v-for="panel in panels"
+                v-for="panel in visiblePanels"
                 :key="panel.id"
                 :class="getPanelClass(panel)"
                 class="dashboard-panel-wrapper"
             >
                 <DashboardPanel :panel="panel" :time-range="timeRange" />
             </div>
+        </div>
+
+        <!-- All Panels Hidden State -->
+        <div v-else-if="panels.length > 0 && visiblePanels.length === 0" class="empty-state">
+            <i class="i-Eye text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">All Panels Hidden</h3>
+            <p class="text-gray-600">All panels are hidden. Go to Dashboard Management to enable them.</p>
         </div>
     </div>
 </template>
@@ -67,13 +74,22 @@ export default {
             error: null,
             dashboard: null,
             panels: [],
+            dashboardId: 'PegasGonda_cutting_analyse_dashboard',
             timeRange: {
                 start: '-90d',
                 stop: 'now()'
             }
         };
     },
+    computed: {
+        visiblePanels() {
+            return this.panels.filter(panel => {
+                return this.$store.getters['panelVisibility/isPanelVisible'](this.dashboardId, panel.id);
+            });
+        }
+    },
     mounted() {
+        this.$store.dispatch('panelVisibility/loadFromBackend');
         this.loadDashboard();
     },
     methods: {
@@ -83,7 +99,7 @@ export default {
 
             try {
                 // Load dashboard definition from Grafana JSON
-                this.dashboard = await getDashboardDefinition('PegasGonda_cutting_analyse_dashboard');
+                this.dashboard = await getDashboardDefinition(this.dashboardId);
                 
                 // Parse panels
                 this.panels = parseDashboardPanels(this.dashboard);
@@ -230,5 +246,10 @@ export default {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
 }
 </style>

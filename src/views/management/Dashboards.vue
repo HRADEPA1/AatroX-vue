@@ -68,10 +68,46 @@
       <span>{{ error }}</span>
     </div>
 
+    <!-- Panel Visibility Controls -->
+    <div v-if="!loading && !error && panels.length > 0" class="card p-4 bg-white rounded-lg shadow mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <i class="i-Eye text-gray-500"></i>
+          <h3 class="font-semibold text-gray-700">Panel Visibility</h3>
+          <span class="text-sm text-gray-500">({{ visiblePanels.length }}/{{ panels.length }} visible)</span>
+        </div>
+        <div class="flex gap-2">
+          <button @click="showAllPanels" class="btn btn-sm btn-outline">
+            Show All
+          </button>
+          <button @click="hideAllPanels" class="btn btn-sm btn-outline">
+            Hide All
+          </button>
+        </div>
+      </div>
+      <div class="panel-visibility-grid">
+        <label
+          v-for="panel in panels"
+          :key="'toggle-' + panel.id"
+          class="panel-toggle-item"
+          :class="{ 'panel-toggle-disabled': !isPanelVisible(panel.id) }"
+        >
+          <input
+            type="checkbox"
+            :checked="isPanelVisible(panel.id)"
+            @change="togglePanelVisibility(panel.id, $event.target.checked)"
+            class="panel-toggle-checkbox"
+          />
+          <span class="panel-toggle-label">{{ panel.title }}</span>
+          <span class="panel-toggle-type">{{ panel.type || 'graph' }}</span>
+        </label>
+      </div>
+    </div>
+
     <!-- Dashboard Grid -->
-    <div v-else-if="panels.length > 0" class="dashboard-grid">
+    <div v-if="!loading && !error && visiblePanels.length > 0" class="dashboard-grid">
       <div
-        v-for="panel in panels"
+        v-for="panel in visiblePanels"
         :key="panel.id"
         :class="getPanelClass(panel)"
         class="dashboard-panel-wrapper"
@@ -81,7 +117,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="empty-state">
+    <div v-if="!loading && !error && panels.length === 0" class="empty-state">
       <i class="i-Bar-Chart text-6xl text-gray-300 mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-700 mb-2">No Dashboard Selected</h3>
       <p class="text-gray-600">Select a dashboard from the dropdown above to view its panels</p>
@@ -392,12 +428,16 @@ export default {
       const info = this.availableDashboards.find(d => d.filename === this.selectedDashboard);
       return info || {};
     },
+    visiblePanels() {
+      return this.panels.filter(panel => this.isPanelVisible(panel.id));
+    },
     lineCount() {
       if (!this.editedJson) return 1;
       return this.editedJson.split('\n').length;
     }
   },
   mounted() {
+    this.$store.dispatch('panelVisibility/loadFromBackend');
     this.loadAvailableDashboards();
     this.loadDashboard();
   },
@@ -429,6 +469,34 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    isPanelVisible(panelId) {
+      return this.$store.getters['panelVisibility/isPanelVisible'](this.selectedDashboard, panelId);
+    },
+
+    togglePanelVisibility(panelId, visible) {
+      this.$store.dispatch('panelVisibility/togglePanel', {
+        dashboardId: this.selectedDashboard,
+        panelId,
+        visible
+      });
+    },
+
+    showAllPanels() {
+      const panelIds = this.panels.map(p => p.id);
+      this.$store.dispatch('panelVisibility/showAllPanels', {
+        dashboardId: this.selectedDashboard,
+        panelIds
+      });
+    },
+
+    hideAllPanels() {
+      const panelIds = this.panels.map(p => p.id);
+      this.$store.dispatch('panelVisibility/hideAllPanels', {
+        dashboardId: this.selectedDashboard,
+        panelIds
+      });
     },
 
     refreshDashboard() {
@@ -1028,5 +1096,58 @@ export default {
 
 .absolute {
   position: absolute;
+}
+
+/* Panel Visibility Controls */
+.panel-visibility-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.5rem;
+}
+
+.panel-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  background-color: white;
+}
+
+.panel-toggle-item:hover {
+  border-color: #3b82f6;
+  background-color: #f0f7ff;
+}
+
+.panel-toggle-disabled {
+  opacity: 0.55;
+  background-color: #f9fafb;
+}
+
+.panel-toggle-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #3b82f6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.panel-toggle-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-toggle-type {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  flex-shrink: 0;
 }
 </style>
