@@ -233,13 +233,9 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                 Cutting Segments - Lengths and Angles
               </h2>
               <div class="flex gap-2">
-                <button @click="addSegment('symmetric')" class="btn btn-primary btn-sm">
+                <button @click="addSegment" class="btn btn-primary btn-sm">
                   <i class="i-Add mr-1"></i>
-                  Add Symmetric
-                </button>
-                <button @click="addSegment('asymmetric')" class="btn btn-secondary btn-sm">
-                  <i class="i-Add mr-1"></i>
-                  Add Asymmetric
+                  Add Segment
                 </button>
               </div>
             </div>
@@ -287,10 +283,10 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                           - Line CD = W (vertical left edge)
                           
                           Inner angles:
-                          - Vertex A (top right): α (alpha/A1)
-                          - Vertex B (bottom right): β (beta/A2)
-                          - Vertex C (bottom left): γ (gamma/A3)
-                          - Vertex D (top left): δ (delta/A4)
+                          - Vertex A (top right): γ (gamma/A1)
+                          - Vertex B (bottom right): δ (delta/A2)
+                          - Vertex C (bottom left): β (beta/A3)
+                          - Vertex D (top left): α (alpha/A4)
                         -->
                         <path 
                           :d="(() => {
@@ -639,8 +635,8 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                         >L2 = {{ (segment.length_l2 || 0).toFixed(2) }}</text>
                       </g>
                       
-                      <!-- Angle α (alpha) - Top Right -->
-                      <g id="angle-alpha">
+                      <!-- Angle γ (gamma) - Top Right -->
+                      <g id="angle-gamma">
                         <!-- <path 
                           :d="(() => {
                             const scale = 2.5;
@@ -729,11 +725,11 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                           font-weight="700"
                           fill="#2563eb" 
                           text-anchor="middle"
-                        >α={{ segment.angle_a1 || 0 }}°</text>
+                        >γ={{ segment.angle_a1 || 0 }}°</text>
                       </g>
                       
-                      <!-- Angle β (beta) - Bottom Right -->
-                      <g id="angle-beta">
+                      <!-- Angle δ (delta) - Bottom Right -->
+                      <g id="angle-delta">
                         <!-- <path 
                           :d="(() => {
                             const scale = getDrawingParams(segment).scale;
@@ -798,11 +794,11 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                           font-weight="700"
                           fill="#7c3aed" 
                           text-anchor="middle"
-                        >β={{ segment.angle_a2 || 0 }}°</text>
+                        >δ={{ segment.angle_a2 || 0 }}°</text>
                       </g>
                       
-                      <!-- Angle γ (gamma) - Bottom Left -->
-                      <g id="angle-gamma">
+                      <!-- Angle β (beta) - Bottom Left -->
+                      <g id="angle-beta">
                         <!-- <path 
                           :d="(() => {
                             const scale = 2.5;
@@ -865,11 +861,11 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                           font-weight="700"
                           fill="#059669" 
                           text-anchor="middle"
-                        >γ={{ segment.angle_a3 || 0 }}°</text>
+                        >β={{ segment.angle_a3 || 0 }}°</text>
                       </g>
                       
-                      <!-- Angle δ (delta) - Top Left -->
-                      <g id="angle-delta">
+                      <!-- Angle α (alpha) - Top Left -->
+                      <g id="angle-alpha">
                         <!-- <path 
                           :d="(() => {
                             const scale = 2.5;
@@ -955,7 +951,7 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                           font-weight="700"
                           fill="#ea580c" 
                           text-anchor="middle"
-                        >δ={{ segment.angle_a4 || 0 }}°</text>
+                        >α={{ segment.angle_a4 || 0 }}°</text>
                       </g>
                       
                       <!-- Title block - piece count -->
@@ -999,21 +995,44 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <!-- Calculation Variant Selector -->
+                  <!-- Left Side Variant Selector -->
                   <div class="md:col-span-3">
-                    <label class="form-label">Calculation Variant</label>
-                    <select v-model="segment.calculation_variant" @change="onCalculationVariantChange(index)" class="form-input w-full">
-                      <option value="manual">Manual - Define all angles and lengths</option>
-                      <option value="auto_angles">Auto from Angles - Define all angles, L2/L3/L4 calculated</option>
-                      <option value="auto_l3">Auto L3 - Define L2+α+β and L4+γ+δ, L3 calculated</option>
-                      <option value="auto_l4">Auto L4 - Define L2+α+β and L3+γ+δ, L4 calculated</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">
-                      <span v-if="segment.calculation_variant === 'manual'">Enter all values manually</span>
-                      <span v-if="segment.calculation_variant === 'auto_angles'">Lengths calculated from angles and material width W</span>
-                      <span v-if="segment.calculation_variant === 'auto_l3'">L3 = L1 - L2 - L4</span>
-                      <span v-if="segment.calculation_variant === 'auto_l4'">L4 = L1 - L2 - L3</span>
-                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="form-label">Left Side Variant (α, β)</label>
+                        <select v-model="segment.left_variant" @change="onLeftVariantChange(index)" class="form-input w-full">
+                          <option value="L1">1) α=90°, β=90° — Rectangle</option>
+                          <option value="L2">2) α=45°, β=135° — Acute top, obtuse bottom</option>
+                          <option value="L3">3) α=135°, β=45° — Obtuse top, acute bottom</option>
+                          <option value="L4">4) α=135°, β=90° — Obtuse top (L4 editable)</option>
+                          <option value="L5">5) α=90°, β=135° — Obtuse bottom (L4 editable)</option>
+                          <option value="L6">6) α=135°, β=135° — Sharp tip (L4 = W/2)</option>
+                          <option value="L7">7) α=135°, β=135° — User defined L4 (L4 &lt; W/2)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                          <span v-if="segment.left_variant === 'L1'">Standard rectangular left side</span>
+                          <span v-if="segment.left_variant === 'L2'">α=45° top-left, β=135° bottom-left</span>
+                          <span v-if="segment.left_variant === 'L3'">α=135° top-left, β=45° bottom-left</span>
+                          <span v-if="segment.left_variant === 'L4'">α=135° obtuse top-left, β=90° — user can set L4</span>
+                          <span v-if="segment.left_variant === 'L5'">α=90°, β=135° obtuse bottom-left — user can set L4</span>
+                          <span v-if="segment.left_variant === 'L6'">Both 135°, L4 = W/2 — sharp tip</span>
+                          <span v-if="segment.left_variant === 'L7'">Both 135°, user defines L4 (L4 &lt; W/2)</span>
+                        </p>
+                      </div>
+                      <div>
+                        <label class="form-label">Right Side Variant (γ, δ)</label>
+                        <select v-model="segment.right_variant" @change="onRightVariantChange(index)" class="form-input w-full">
+                          <option value="R1">1) γ=90°, δ=90° — Rectangle</option>
+                          <option value="R2">2) γ=45°, δ=135° — Acute top, obtuse bottom</option>
+                          <option value="R3">3) γ=135°, δ=45° — Obtuse top, acute bottom</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                          <span v-if="segment.right_variant === 'R1'">Standard rectangular right side</span>
+                          <span v-if="segment.right_variant === 'R2'">γ=45° top-right, δ=135° bottom-right</span>
+                          <span v-if="segment.right_variant === 'R3'">γ=135° top-right, δ=45° bottom-right</span>
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Material Type Toggle -->
@@ -1021,12 +1040,12 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                     <label class="form-label">Material Type</label>
                     <div class="flex gap-4">
                       <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" :name="'type-' + index" value="symmetric" v-model="segment.type" @change="onTypeChange(index)" class="form-radio" />
-                        <span>Symmetric (L2 = L4, α = δ, β = γ)</span>
+                        <input type="radio" :name="'type-' + index" value="symmetric" v-model="segment.type" class="form-radio" />
+                        <span>Symmetric (align the next piece to the previous piece with one cut)</span>
                       </label>
                       <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="radio" :name="'type-' + index" value="asymmetric" v-model="segment.type" class="form-radio" />
-                        <span>Asymmetric (All independent)</span>
+                        <span>Asymmetric (next piece independent)</span>
                       </label>
                     </div>
                   </div>
@@ -1065,87 +1084,53 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                     </p>
                   </div>
 
-                  <!-- Angles -->
+                  <!-- Angles (set by variant selectors, read-only) -->
                   <div>
-                    <label class="form-label">Angle α (alpha) - Top Right (°)</label>
+                    <label class="form-label">Angle γ (gamma) - Top Right (°)</label>
                     <input 
                       v-model.number="segment.angle_a1" 
                       type="number" 
-                      step="0.1" 
-                      min="30" 
-                      max="150" 
-                      class="form-input w-full" 
-                      @change="onAngleA1Change(index)" 
+                      class="form-input w-full bg-gray-100" 
+                      readonly 
                       placeholder="90" 
-                      :disabled="!isSegmentBasicInfoSet(segment)"
-                      :class="{ 'bg-gray-100 cursor-not-allowed': !isSegmentBasicInfoSet(segment) }"
                     />
-                    <p class="text-xs mt-1" :class="isSegmentBasicInfoSet(segment) ? 'text-gray-500' : 'text-orange-600 font-semibold'">
-                      <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
-                      <span v-else>Top right angle: 30-150°</span>
-                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Set by right side variant</p>
                   </div>
 
                   <div>
-                    <label class="form-label">Angle β (beta) - Bottom Right (°)</label>
+                    <label class="form-label">Angle δ (delta) - Bottom Right (°)</label>
                     <input 
                       v-model.number="segment.angle_a2" 
                       type="number" 
-                      step="0.1" 
-                      min="30" 
-                      max="150" 
-                      class="form-input w-full" 
-                      @change="onAngleA2Change(index)" 
+                      class="form-input w-full bg-gray-100" 
+                      readonly 
                       placeholder="90" 
-                      :disabled="!isSegmentBasicInfoSet(segment)"
-                      :class="{ 'bg-gray-100 cursor-not-allowed': !isSegmentBasicInfoSet(segment) }"
                     />
-                    <p class="text-xs mt-1" :class="isSegmentBasicInfoSet(segment) ? 'text-gray-500' : 'text-orange-600 font-semibold'">
-                      <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
-                      <span v-else>Bottom right angle: 30-150°</span>
-                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Set by right side variant</p>
                   </div>
 
                   <div>
-                    <label class="form-label">Angle γ (gamma) - Bottom Left (°)</label>
+                    <label class="form-label">Angle β (beta) - Bottom Left (°)</label>
                     <input 
                       v-model.number="segment.angle_a3" 
                       type="number" 
-                      step="0.1" 
-                      min="30" 
-                      max="150" 
-                      class="form-input w-full" 
-                      :readonly="segment.type === 'symmetric'" 
-                      :disabled="!isSegmentBasicInfoSet(segment)"
-                      :class="{ 'bg-gray-100': segment.type === 'symmetric' || !isSegmentBasicInfoSet(segment), 'cursor-not-allowed': !isSegmentBasicInfoSet(segment) }" 
-                      @change="onAngleA3Change(index)" 
+                      class="form-input w-full bg-gray-100" 
+                      readonly 
                       placeholder="90" 
                     />
-                    <p class="text-xs mt-1" :class="isSegmentBasicInfoSet(segment) ? 'text-gray-500' : 'text-orange-600 font-semibold'">
-                      <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
-                      <span v-else>Bottom left angle: 30-150° {{ segment.type === 'symmetric' ? '(auto = β)' : '' }}</span>
-                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Set by left side variant</p>
                   </div>
 
                   <div>
-                    <label class="form-label">Angle δ (delta) - Top Left (°)</label>
+                    <label class="form-label">Angle α (alpha) - Top Left (°)</label>
                     <input 
                       v-model.number="segment.angle_a4" 
                       type="number" 
-                      step="0.1" 
-                      min="30" 
-                      max="150" 
-                      class="form-input w-full" 
-                      :readonly="segment.type === 'symmetric'" 
-                      :disabled="!isSegmentBasicInfoSet(segment)"
-                      :class="{ 'bg-gray-100': segment.type === 'symmetric' || !isSegmentBasicInfoSet(segment), 'cursor-not-allowed': !isSegmentBasicInfoSet(segment) }" 
-                      @change="onAngleA4Change(index)" 
+                      class="form-input w-full bg-gray-100" 
+                      readonly 
                       placeholder="90" 
                     />
-                    <p class="text-xs mt-1" :class="isSegmentBasicInfoSet(segment) ? 'text-gray-500' : 'text-orange-600 font-semibold'">
-                      <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
-                      <span v-else>Top left angle: 30-150° {{ segment.type === 'symmetric' ? '(auto = α)' : '' }}</span>
-                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Set by left side variant</p>
                   </div>
 
                   <!-- Lengths -->
@@ -1158,9 +1143,9 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                       min="0" 
                       max="20000" 
                       class="form-input w-full" 
-                      :readonly="segment.calculation_variant === 'auto_angles'" 
+                      :readonly="isL2Readonly(segment)" 
                       :disabled="!isSegmentBasicInfoSet(segment)"
-                      :class="{ 'bg-gray-100': segment.calculation_variant === 'auto_angles' || !isSegmentBasicInfoSet(segment), 'cursor-not-allowed': !isSegmentBasicInfoSet(segment) }" 
+                      :class="{ 'bg-gray-100': isL2Readonly(segment) || !isSegmentBasicInfoSet(segment), 'cursor-not-allowed': !isSegmentBasicInfoSet(segment) }" 
                       @change="onLengthL2Change(index)" 
                       placeholder="0" 
                     />
@@ -1168,7 +1153,7 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                       <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
                       <span v-else>
                         Bottom right section
-                        <span v-if="segment.calculation_variant === 'auto_angles'"> (auto calculated)</span>
+                        <span v-if="isL2Readonly(segment)"> (auto calculated from variant)</span>
                       </span>
                     </p>
                   </div>
@@ -1181,19 +1166,12 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                       step="0.1" 
                       min="0" 
                       max="20000" 
-                      class="form-input w-full" 
-                      :readonly="segment.calculation_variant === 'auto_angles' || segment.calculation_variant === 'auto_l3'" 
-                      :disabled="!isSegmentBasicInfoSet(segment)"
-                      :class="{ 'bg-gray-100': segment.calculation_variant === 'auto_angles' || segment.calculation_variant === 'auto_l3' || !isSegmentBasicInfoSet(segment), 'cursor-not-allowed': !isSegmentBasicInfoSet(segment) }" 
-                      @change="onLengthL3Change(index)" 
+                      class="form-input w-full bg-gray-100" 
+                      readonly 
                       placeholder="0" 
                     />
-                    <p class="text-xs mt-1" :class="isSegmentBasicInfoSet(segment) ? 'text-gray-500' : 'text-orange-600 font-semibold'">
-                      <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
-                      <span v-else>
-                        Middle section
-                        <span v-if="segment.calculation_variant === 'auto_angles' || segment.calculation_variant === 'auto_l3'"> (auto calculated)</span>
-                      </span>
+                    <p class="text-xs text-gray-500 mt-1">
+                      L3 = L1 - L2 - L4 (auto calculated)
                     </p>
                   </div>
 
@@ -1206,15 +1184,18 @@ value. The motor M1 returns cutting feed stops immediately when the maximum valu
                       min="0" 
                       max="20000" 
                       class="form-input w-full" 
-                      :readonly="segment.type === 'symmetric' || segment.calculation_variant === 'auto_angles' || segment.calculation_variant === 'auto_l4'" 
-                      :class="{ 'bg-gray-100': segment.type === 'symmetric' || segment.calculation_variant === 'auto_angles' || segment.calculation_variant === 'auto_l4' }" 
+                      :readonly="isL4Readonly(segment)" 
+                      :disabled="!isSegmentBasicInfoSet(segment)"
+                      :class="{ 'bg-gray-100': isL4Readonly(segment) || !isSegmentBasicInfoSet(segment), 'cursor-not-allowed': !isSegmentBasicInfoSet(segment) }" 
                       @change="onLengthL4Change(index)" 
                       placeholder="0" 
                     />
-                    <p class="text-xs text-gray-500 mt-1">
-                      Bottom left section 
-                      {{ segment.type === 'symmetric' ? '(auto = L2)' : '' }}
-                      <span v-if="segment.calculation_variant === 'auto_angles' || segment.calculation_variant === 'auto_l4'"> (auto calculated)</span>
+                    <p class="text-xs mt-1" :class="isSegmentBasicInfoSet(segment) ? 'text-gray-500' : 'text-orange-600 font-semibold'">
+                      <span v-if="!isSegmentBasicInfoSet(segment)">Set Material Width (W) and Length L1 first</span>
+                      <span v-else>
+                        Bottom left section
+                        <span v-if="isL4Readonly(segment)"> (auto calculated from variant)</span>
+                      </span>
                     </p>
                   </div>
 
@@ -1483,12 +1464,13 @@ export default {
         // Map segments with proper field names
         form.segments = (response.data.segments || []).map(seg => ({
           type: seg.segment_type || 'symmetric',  // API uses segment_type, frontend uses type
-          calculation_variant: seg.calculation_variant || 'manual',
+          left_variant: seg.left_variant || 'L1',
+          right_variant: seg.right_variant || 'R1',
           material_width: seg.material_width || 0,
-          angle_a1: seg.angle_a1 || 90,  // alpha
-          angle_a2: seg.angle_a2 || 90,  // beta
-          angle_a3: seg.angle_a3 || 90,  // gamma
-          angle_a4: seg.angle_a4 || 90,  // delta
+          angle_a1: seg.angle_a1 || 90,  // γ (gamma)
+          angle_a2: seg.angle_a2 || 90,  // δ (delta)
+          angle_a3: seg.angle_a3 || 90,  // β (beta)
+          angle_a4: seg.angle_a4 || 90,  // α (alpha)
           piece_count: seg.piece_count || 1,
           length_l1: seg.length_l1 || 0,
           length_l2: seg.length_l2 || 0,
@@ -1508,12 +1490,13 @@ export default {
     const addSegment = (type = 'symmetric') => {
       form.segments.push({
         type: type,
-        calculation_variant: 'manual',  // Default to manual
+        left_variant: 'L1',   // Default: α=90, β=90 (rectangle)
+        right_variant: 'R1',  // Default: γ=90, δ=90 (rectangle)
         material_width: 0,
-        angle_a1: 90,  // alpha (α)
-        angle_a2: 90,  // beta (β)
-        angle_a3: 90,  // gamma (γ)
-        angle_a4: 90,  // delta (δ)
+        angle_a1: 90,  // γ (gamma) - Top Right
+        angle_a2: 90,  // δ (delta) - Bottom Right
+        angle_a3: 90,  // β (beta) - Bottom Left
+        angle_a4: 90,  // α (alpha) - Top Left
         piece_count: 1,
         length_l1: 0,  // Total bottom length
         length_l2: 0,  // Bottom right section
@@ -1542,95 +1525,57 @@ export default {
 
     const onTypeChange = (index) => {
       const segment = form.segments[index];
-      if (segment.type === 'symmetric') {
-        // For symmetric: L2=L4, alpha=delta, beta=gamma
-        segment.angle_a4 = segment.angle_a1;  // delta = alpha
-        segment.angle_a3 = segment.angle_a2;  // gamma = beta
-        segment.length_l4 = segment.length_l2;  // L4 = L2
-      }
+      // if (segment.type === 'symmetric') {
+      //   // For symmetric: right side mirrors left side
+      //   segment.right_variant = 'R1'; // Reset right side to rectangle
+      //   segment.angle_a4 = segment.angle_a1;  // alpha = gamma
+      //   segment.angle_a3 = segment.angle_a2;  // beta = delta
+      //   segment.length_l4 = segment.length_l2;  // L4 = L2
+      // }
     };
 
-    const onAngleA1Change = (index) => {
-      const segment = form.segments[index];
-      debounceCalculation(`angle_a1_${index}`, () => {
-        console.log('Angle α (alpha) - Top Right (°) changed.  A1 = ', segment.angle_a1);
-        if (segment.type === 'symmetric') {
-          segment.angle_a4 = segment.angle_a1;  // delta = alpha
-        }
-        applyCalculationVariant(index);
-      });
-    };
-
-    const onAngleA2Change = (index) => {
-      const segment = form.segments[index];
-      debounceCalculation(`angle_a2_${index}`, () => {
-        console.log('Angle β (beta) - Bottom Right (°) changed.  A2 = ', segment.angle_a2);
-        if (segment.type === 'symmetric') {
-          segment.angle_a3 = segment.angle_a2;  // gamma = beta
-        }
-        applyCalculationVariant(index);
-      });
-    };
+    // Angles are now set by variant selectors - keep onChange handlers minimal
+    const onAngleA1Change = (index) => { recalculateLengths(index); };
+    const onAngleA2Change = (index) => { recalculateLengths(index); };
+    const onAngleA3Change = (index) => { recalculateLengths(index); };
+    const onAngleA4Change = (index) => { recalculateLengths(index); };
 
     const onLengthL1Change = (index) => {
       const segment = form.segments[index]; 
-      // Apply calculation variant logic (respects manual mode)
       debounceCalculation(`length_l1_${index}`, () => {
         console.log('Length L1 - Total Bottom changed. L1 = ', segment.length_l1);
-        
-        // Initialize defaults if L2, L3, L4 are not yet defined
-        if (segment.length_l3 === 0 && segment.length_l2 === 0 && segment.length_l4 === 0) {
-          segment.length_l3 = segment.length_l1 || 0;  // L3 = L1 by default
-          segment.length_l2 = 0;
-          segment.length_l4 = 0;
-        }
-        
-        applyCalculationVariant(index);
+        recalculateLengths(index);
       });
     };
 
     const onLengthL2Change = (index) => {
       const segment = form.segments[index];
-      // Auto calculate based on variant
       debounceCalculation(`length_l2_${index}`, () => {
         console.log('Length L2 - Right Section changed. L2 = ', segment.length_l2);
-        if (segment.type === 'symmetric') {
-          segment.length_l4 = segment.length_l2;  // L4 = L2
-        }
-        applyCalculationVariant(index);
+        recalculateLengths(index);
       });
     };
 
     const onLengthL3Change = (index) => {
-      const segment = form.segments[index];
-      debounceCalculation(`length_l3_${index}`, () => {
-        console.log('Length L3 - Middle Section changed. L3 = ', segment.length_l3);
-        applyCalculationVariant(index);
-      });
+      // L3 is always auto-calculated, no user input
     };
 
     const onLengthL4Change = (index) => {
       const segment = form.segments[index];
       debounceCalculation(`length_l4_${index}`, () => {
+        const W = segment.material_width || 0;
+        // Clamp L4 for variants L4/L5: max L4 = W
+        if ((segment.left_variant === 'L4' || segment.left_variant === 'L5') && segment.length_l4 > W) {
+          segment.length_l4 = parseFloat(W.toFixed(4));
+          console.log('L4 clamped to W =', W, 'for variant', segment.left_variant);
+        }
+        // Clamp L4 for variant L7: max L4 < W/2
+        if (segment.left_variant === 'L7' && segment.length_l4 >= W / 2) {
+          segment.length_l4 = parseFloat((W / 2 - 0.1).toFixed(4));
+          console.log('L4 clamped to W/2 - 0.1 =', segment.length_l4, 'for variant L7');
+        }
         console.log('Length L4 - Left Section changed. L4 = ', segment.length_l4);
-        applyCalculationVariant(index);
-      });
-    };
-
-    const onAngleA3Change = (index) => {
-      const segment = form.segments[index];
-      debounceCalculation(`angle_a3_${index}`, () => {
-        console.log('Angle γ (gamma) - Bottom Left (°) changed.  A3 = ', segment.angle_a3);
-        applyCalculationVariant(index);
-      });
-    };
-
-    const onAngleA4Change = (index) => {
-      const segment = form.segments[index];
-      
-      debounceCalculation(`angle_a4_${index}`, () => {
-        console.log('Angle δ (delta) - Bottom Right (°) changed.  A4 = ', segment.angle_a4);
-        applyCalculationVariant(index);
+        recalculateLengths(index);
       });
     };
 
@@ -1638,7 +1583,7 @@ export default {
       const segment = form.segments[index];
       debounceCalculation(`material_width_${index}`, () => {
         console.log('Material width changed. W = ', segment.material_width);
-        applyCalculationVariant(index);
+        recalculateLengths(index);
       });
     };
 
@@ -1646,112 +1591,163 @@ export default {
       return segment && segment.material_width > 0 && segment.length_l1 > 0;
     };
 
-    const onCalculationVariantChange = (index) => {
-      const segment = form.segments[index];
-      // Initialize default values based on variant
-      if (segment.calculation_variant === 'manual') {
-        // No auto calculations
-      } else if (segment.calculation_variant === 'auto_angles') {
-        // Set L2=0, L4=0, L3=L1 as default
-        segment.length_l2 = 0;
-        segment.length_l4 = 0;
-        segment.length_l3 = segment.length_l1 || 0;
-      } else if (segment.calculation_variant === 'auto_l3') {
-        // L3 will be calculated from L1 - L2 - L4
-      } else if (segment.calculation_variant === 'auto_l4') {
-        // L4 will be calculated from L1 - L2 - L3
+    // Helper: determine if L2 is auto-calculated (readonly) based on right variant
+    const isL2Readonly = (segment) => {
+      // L2 is always calculated from right side variant angles
+      return true;
+    };
+
+    // Helper: determine if L4 is auto-calculated (readonly) based on left variant
+    const isL4Readonly = (segment) => {
+      // L4 is editable for variants: L4, L5, L7 (regardless of symmetric/asymmetric)
+      // L4 is readonly for: L1 (rectangle), L2/L3 (calculated from angles), L6 (L4=W/2), symmetric without special variant
+      const variant = segment.left_variant;
+      if (variant === 'L4' || variant === 'L5' || variant === 'L7') return false; // Always editable
+      if (variant === 'L1') return true;  // Rectangle, L4=0
+      if (variant === 'L2') return true;  // L4 calculated from α=45,β=135
+      if (variant === 'L3') return true;  // L4 calculated from α=135,β=45
+      if (variant === 'L6') return true;  // L4 = W/2 (sharp tip)
+      return true;
+    };
+
+    // Apply angles from left side variant
+    const applyLeftVariant = (segment) => {
+      switch (segment.left_variant) {
+        case 'L1': segment.angle_a4 = 90;  segment.angle_a3 = 90;  break; // α=90, β=90
+        case 'L2': segment.angle_a4 = 45;  segment.angle_a3 = 135; break; // α=45, β=135
+        case 'L3': segment.angle_a4 = 135; segment.angle_a3 = 45;  break; // α=135, β=45
+        case 'L4': segment.angle_a4 = 135; segment.angle_a3 = 90;  break; // α=135, β=90, user can change L4
+        case 'L5': segment.angle_a4 = 90;  segment.angle_a3 = 135; break; // α=90, β=135, user can change L4
+        case 'L6': segment.angle_a4 = 135; segment.angle_a3 = 135; break; // α=135, β=135, L4=W/2 (sharp tip)
+        case 'L7': segment.angle_a4 = 135; segment.angle_a3 = 135; break; // α=135, β=135, user defines L4 (<W/2)
       }
-      applyCalculationVariant(index);
+    };
+
+    // Apply angles from right side variant
+    const applyRightVariant = (segment) => {
+      switch (segment.right_variant) {
+        case 'R1': segment.angle_a1 = 90;  segment.angle_a2 = 90;  break; // γ=90, δ=90
+        case 'R2': segment.angle_a1 = 45;  segment.angle_a2 = 135; break; // γ=45, δ=135
+        case 'R3': segment.angle_a1 = 135; segment.angle_a2 = 45;  break; // γ=135, δ=45
+      }
+    };
+
+    const onLeftVariantChange = (index) => {
+      const segment = form.segments[index];
+      applyLeftVariant(segment);
+      console.log('Left variant changed to', segment.left_variant, '→ α=', segment.angle_a4, ', β=', segment.angle_a3);
+      // Only auto-set L4 for L6 (sharp tip: L4=W/2), don't recalculate polygon
+      if (segment.left_variant === 'L6' && segment.material_width > 0) {
+        segment.length_l4 = parseFloat((segment.material_width / 2).toFixed(4));
+      }
+      if (segment.left_variant === 'L1') {
+        segment.length_l4 = 0;
+      }
+      if (segment.left_variant === 'L2' && segment.material_width > 0) {
+        segment.length_l4 = segment.material_width;
+      }
+      if (segment.left_variant === 'L3' && segment.material_width > 0) {
+        segment.length_l4 = segment.material_width;
+      }
+      console.log('After applying left variant, L4 =', segment.length_l4);
+      segment.length_l3 = parseFloat(Math.max(0, segment.length_l1 - (segment.length_l2 || 0) - (segment.length_l4 || 0)).toFixed(4));
+    };
+
+    const onRightVariantChange = (index) => {
+      const segment = form.segments[index];
+      applyRightVariant(segment);
+      console.log('Right variant changed to', segment.right_variant, '→ γ=', segment.angle_a1, ', δ=', segment.angle_a2);
+      if (segment.right_variant === 'R1' && segment.material_width > 0) {
+        segment.length_l2 = 0;
+      }
+      if (segment.right_variant === 'R2' && segment.material_width > 0) {
+        segment.length_l2 = parseFloat(segment.material_width.toFixed(4));
+      }
+      if (segment.right_variant === 'R3' && segment.material_width > 0) {
+        segment.length_l2 = parseFloat(segment.material_width.toFixed(4));
+      }
+      segment.length_l3 = parseFloat(Math.max(0, segment.length_l1 - (segment.length_l2 || 0) - (segment.length_l4 || 0)).toFixed(4));
+    };
+
+    // Main calculation: compute L2, L4 from angles/variant, then L3 = L1 - L2 - L4
+    const recalculateLengths = (index) => {
+      const segment = form.segments[index];
+      const W = segment.material_width || 0;
+      const L1 = segment.length_l1 || 0;
+
+      if (W <= 0 || L1 <= 0) return;
+
+      // Calculate L2 from right side angles (γ = angle_a1, δ = angle_a2)
+      const gamma = segment.angle_a1 || 90;
+      const delta = segment.angle_a2 || 90;
+
+      if (gamma === 90 && delta === 90) {
+        segment.length_l2 = 0;
+      } else if (gamma < 90) {
+        // Acute top-right (e.g. γ=45): L2 = W / tan(γ)
+        const gammaRad = gamma * Math.PI / 180;
+        segment.length_l2 = parseFloat((W / Math.tan(gammaRad)).toFixed(4));
+      } else if (gamma > 90) {
+        // Obtuse top-right (e.g. γ=135): L2 = W / tan(180-γ) = W * tan(γ-90)
+        const cutRad = (gamma - 90) * Math.PI / 180;
+        segment.length_l2 = parseFloat((W * Math.tan(cutRad)).toFixed(4));
+      } else if (delta < 90) {
+        // Acute bottom-right (e.g. δ=45): L2 = W / tan(δ)
+        const deltaRad = delta * Math.PI / 180;
+        segment.length_l2 = parseFloat((W / Math.tan(deltaRad)).toFixed(4));
+      } else if (delta > 90) {
+        // Obtuse bottom-right (e.g. δ=135): L2 = W * tan(δ-90)
+        const cutRad = (delta - 90) * Math.PI / 180;
+        segment.length_l2 = parseFloat((W * Math.tan(cutRad)).toFixed(4));
+      }
+
+      // Calculate L4 from left side angles (α = angle_a4, β = angle_a3)
+      const alpha = segment.angle_a4 || 90;
+      const beta = segment.angle_a3 || 90;
+
+      if (segment.left_variant === 'L6') {
+        // Sharp tip: α=135, β=135 → L4 = W/2
+        segment.length_l4 = parseFloat((W / 2).toFixed(4));
+      } else if (segment.left_variant === 'L7') {
+        // User defined L4 (L4 < W/2) — don't overwrite user's value
+        // Only clamp if exceeds W/2
+        if (segment.length_l4 >= W / 2) {
+          segment.length_l4 = parseFloat((W / 2 - 0.1).toFixed(4));
+        }
+      } else if (alpha === 90 && beta === 90) {
+        // Rectangle left: L4 = 0 (unless user set it)
+        if (!segment.length_l4) segment.length_l4 = 0;
+      } else if (alpha < 90) {
+        const alphaRad = alpha * Math.PI / 180;
+        segment.length_l4 = parseFloat((W / Math.tan(alphaRad)).toFixed(4));
+      } else if (alpha > 90 && beta === 90) {
+        if (segment.left_variant !== 'L4') {
+          const cutRad = (alpha - 90) * Math.PI / 180;
+          segment.length_l4 = parseFloat((W * Math.tan(cutRad)).toFixed(4));
+        }
+      } else if (beta < 90) {
+        const betaRad = beta * Math.PI / 180;
+        segment.length_l4 = parseFloat((W / Math.tan(betaRad)).toFixed(4));
+      } else if (beta > 90 && alpha === 90) {
+        if (segment.left_variant !== 'L5') {
+          const cutRad = (beta - 90) * Math.PI / 180;
+          segment.length_l4 = parseFloat((W * Math.tan(cutRad)).toFixed(4));
+        }
+      }
+
+      // L3 = L1 - L2 - L4 (always auto-calculated)
+      segment.length_l3 = parseFloat(Math.max(0, segment.length_l1 - (segment.length_l2 || 0) - (segment.length_l4 || 0)).toFixed(4));
+
+      console.log(`Segment ${index}: L1=${segment.length_l1}, L2=${segment.length_l2}, L3=${segment.length_l3}, L4=${segment.length_l4}`);
+    };
+
+    // Keep old name for compatibility
+    const onCalculationVariantChange = (index) => {
+      recalculateLengths(index);
     };
 
     const applyCalculationVariant = (index) => {
-      const segment = form.segments[index];
-      console.log('Applying calculation variant for segment', index);
-      const W = segment.material_width || 0;
-      const L1 = segment.length_l1 || 0;
-      const alpha = (segment.angle_a1 || 90) * Math.PI / 180;
-      const beta = (segment.angle_a2 || 90) * Math.PI / 180;
-      const gamma = (segment.angle_a3 || 90) * Math.PI / 180;
-      const delta = (segment.angle_a4 || 90) * Math.PI / 180;
-
-      if (segment.calculation_variant === 'auto_angles') {
-        // Calculate L2, L3, L4 from angles
-        // L2 = W / tan(β) - right section calculated from bottom right angle
-        // L4 = W / tan(γ) - left section calculated from bottom left angle  
-        // L3 = L1 - L2 - L4
-        if (W > 0) {
-          segment.length_l2 = Math.abs(W / Math.tan(beta));
-          segment.length_l4 = Math.abs(W / Math.tan(gamma));
-          segment.length_l3 = Math.max(0, L1 - segment.length_l2 - segment.length_l4);
-        }
-      } else if (segment.calculation_variant === 'auto_l3') {
-        // L3 = L1 - L2 - L4
-        const L2 = segment.length_l2 || 0;
-        const L4 = segment.length_l4 || 0;
-        segment.length_l3 = Math.max(0, L1 - L2 - L4);
-      } else if (segment.calculation_variant === 'auto_l4') {
-        // L4 = L1 - L2 - L3
-        const L2 = segment.length_l2 || 0;
-        const L3 = segment.length_l3 || 0;
-        segment.length_l4 = Math.max(0, L1 - L2 - L3);
-      } else {
-        // manual mode: calculate L2/L4 from angles if they depend on angles
-        // Calculate L2 if angle alpha or beta is not 90 and L2 is 0 or should be recalculated
-        if (W > 0 && L1 > 0) {
-          const alphaAngle = segment.angle_a1 || 90;
-          const betaAngle = segment.angle_a2 || 90;
-          const gammaAngle = segment.angle_a3 || 90;
-          const deltaAngle = segment.angle_a4 || 90;
-
-          // Angle A1 (alpha) < 90 => auto calculate beta and L3 and L2
-          if (alphaAngle < 90) {
-            console.log('Alpha angle < 90 detected, calculating beta and L2/L3');
-            const alphaRad = alphaAngle * Math.PI / 180; // Convert to radians
-            // Calculate A2 (beta) angle
-            segment.angle_a2 = 180 - 90 + 90 - alphaAngle;
-            console.log('Calculated beta. 180 - 90 - + 90', alphaAngle, '=', segment.angle_a2);
-            // Calculate L2 length
-            segment.length_l2 = W / Math.tan(alphaRad);
-            // Calculate L3 length
-            segment.length_l3 = segment.length_l1 - segment.length_l4 - segment.length_l2;
-            console.log('Calculated L2:', segment.length_l2, 'L3:', segment.length_l3);
-          } else if (alphaAngle > 90) {
-             if (segment.length_l2 === 0 || segment.length_l2 >= segment.material_width) {
-              console.log('Alpha angle > 90 detected, calculating L2');
-              const alphaRad = (alphaAngle - 90) * Math.PI / 180; // Convert to radians
-              // Calculate L2 length
-              segment.length_l2 = Math.abs(W / Math.tan(alphaRad));
-             }
-             // Calculate L3 length
-            segment.length_l3 = segment.length_l1 - segment.length_l4 - segment.length_l2;
-            console.log('Calculated L2:', segment.length_l2, 'L3:', segment.length_l3);
-          }
-
-          // if (alpha > 90) {
-          //                     // Obtuse angle at A: cut off corner
-          //                     const alphaRad = (alpha - 90) * Math.PI / 180;
-          //                     const cutDist = W / Math.tan(alphaRad);
-          //                     points.push({ x: A.x - cutDist, y: A.y });
-          //                     // Add vertical segment down
-          //                     points.push({ x: A.x, y: A.y });
-
-          
-          // Auto-calculate L2 if beta angle is not 90 and (alpha > 90 or beta != 90)
-          // if ((alphaAngle !== 90 || betaAngle !== 90) && segment.length_l2 === 0) {
-          //   segment.length_l2 = Math.abs(W / Math.tan(beta));
-          // }
-          
-          // // Auto-calculate L4 if gamma angle is not 90 and (delta > 90 or gamma != 90)
-          // if ((deltaAngle !== 90 || gammaAngle !== 90) && segment.length_l4 === 0) {
-          //   segment.length_l4 = Math.abs(W / Math.tan(gamma));
-          // }
-          
-          // Recalculate L3 if L2 or L4 were calculated
-          if (segment.length_l2 > 0 || segment.length_l4 > 0) {
-            segment.length_l3 = Math.max(0, L1 - segment.length_l2 - segment.length_l4);
-          }
-        }
-      }
+      recalculateLengths(index);
     };
 
     const onFrameFunctionChange = () => {
@@ -1776,9 +1772,8 @@ export default {
     };
 
     const calculateSegment = (index) => {
-      // Use frontend calculation logic
-      console.log('Manual calculate button clicked for segment', index);
-      applyCalculationVariant(index);
+      console.log('Calculate button clicked for segment', index);
+      recalculateLengths(index);
     };
 
     const validateProgram = () => {
@@ -1870,6 +1865,8 @@ export default {
           segments: form.segments.map((seg, index) => ({
             sequence: index,
             segment_type: seg.type,  // Frontend uses type, API uses segment_type
+            left_variant: seg.left_variant || 'L1',
+            right_variant: seg.right_variant || 'R1',
             material_width: seg.material_width,
             angle_a1: seg.angle_a1,
             angle_a2: seg.angle_a2,
@@ -1953,7 +1950,11 @@ export default {
       onLengthL3Change,
       onLengthL4Change,
       onMaterialWidthChange,
+      onLeftVariantChange,
+      onRightVariantChange,
       onCalculationVariantChange,
+      isL2Readonly,
+      isL4Readonly,
       onFrameFunctionChange,
       onUpperFrameModeChange,
       onLowerFrameModeChange,
