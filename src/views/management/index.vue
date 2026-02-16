@@ -5,8 +5,8 @@
     </div>
 
     <div class="management-grid grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- User Management -->
-      <div class="card p-6 bg-white rounded-lg shadow">
+      <!-- User Management (service+) -->
+      <div v-if="canAccess('users')" class="card p-6 bg-white rounded-lg shadow">
         <div class="flex items-center mb-4">
           <i class="i-Administrator text-4xl text-purple-500 mr-3"></i>
           <h2 class="text-xl font-semibold">User Management</h2>
@@ -17,8 +17,8 @@
         </router-link>
       </div>
 
-      <!-- Datasource Management -->
-      <div class="card p-6 bg-white rounded-lg shadow">
+      <!-- Datasource Management (admin) -->
+      <div v-if="canAccess('datasources')" class="card p-6 bg-white rounded-lg shadow">
         <div class="flex items-center mb-4">
           <i class="i-Data-Storage text-4xl text-blue-500 mr-3"></i>
           <h2 class="text-xl font-semibold">Datasource</h2>
@@ -29,8 +29,8 @@
         </router-link>
       </div>
 
-      <!-- Dashboard Management -->
-      <div class="card p-6 bg-white rounded-lg shadow">
+      <!-- Dashboard Management (service+) -->
+      <div v-if="canAccess('dashboard.manage')" class="card p-6 bg-white rounded-lg shadow">
         <div class="flex items-center mb-4">
           <i class="i-Bar-Chart text-4xl text-green-500 mr-3"></i>
           <h2 class="text-xl font-semibold">Dashboards</h2>
@@ -47,6 +47,11 @@
 <script>
 export default {
   name: 'Management',
+  methods: {
+    canAccess(feature) {
+      return this.$store.getters['auth/canAccess'](feature);
+    },
+  },
 };
 </script>
 

@@ -1,14 +1,20 @@
 <script setup>
-import { onMounted, ref, watch, watchEffect } from 'vue'
+import { onMounted, ref, computed, watch, watchEffect } from 'vue'
 import { Switch } from '@headlessui/vue'
 import HeaderSearch from '../components/HeaderSearch.vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import logoPegasGonda from '@/assets/pegas-gonda-logo.png'
 
 const logoPegasGondaUrl = logoPegasGonda
 
 let store = useStore()
+const router = useRouter()
+
+const userName = computed(() => store.getters['auth/userName'])
+const userRole = computed(() => store.getters['auth/userRole'])
+const isAuthenticated = computed(() => store.getters['auth/isAuthenticated'])
 
 const sideBarToggle = () => {
     let sidenav = store.state.largeSidebar.sidebarToggleProperties.isSideNavOpen
@@ -18,6 +24,11 @@ const sideBarToggle = () => {
     } else {
         store.commit('largeSidebar/toggleSidebarProperties')
     }
+}
+
+const handleLogout = () => {
+    store.dispatch('auth/logout')
+    router.push('/signIn')
 }
 </script>
 
@@ -149,6 +160,7 @@ const sideBarToggle = () => {
                     <MenuButton
                         class="
                             inline-flex
+                            items-center
                             justify-center
                             w-full
                             px-4
@@ -157,7 +169,17 @@ const sideBarToggle = () => {
                             font-medium
                         "
                     >
+                        <div v-if="isAuthenticated" class="flex items-center">
+                            <div class="text-right mr-2 hidden sm:block">
+                                <p class="text-sm font-medium text-gray-800 leading-tight">{{ userName }}</p>
+                                <p class="text-xs text-gray-500 leading-tight capitalize">{{ userRole }}</p>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                                {{ userName ? userName.charAt(0).toUpperCase() : '?' }}
+                            </div>
+                        </div>
                         <img
+                            v-else
                             class="avatar rounded-full"
                             src="/images/faces/1.jpg"
                             alt=""
@@ -194,18 +216,7 @@ const sideBarToggle = () => {
                         </MenuItem>
                         <MenuItem v-slot="{ active }">
                             <button
-                                :class="[
-                                    active
-                                        ? 'bg-purple-500 text-white'
-                                        : 'text-gray-900',
-                                    'group flex  items-center w-full px-4 py-2 text-sm',
-                                ]"
-                            >
-                                Rights
-                            </button>
-                        </MenuItem>
-                        <MenuItem v-slot="{ active }">
-                            <button
+                                @click="handleLogout"
                                 :class="[
                                     active
                                         ? 'bg-purple-500 text-white'

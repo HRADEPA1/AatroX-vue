@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
 
@@ -10,6 +10,8 @@ let toggleSubMenu = (e) => {
     // let parent = e.target.dataset.item;
     console.log(e.target)
 }
+
+const canAccess = (feature) => store.getters['auth/canAccess'](feature)
 
 onMounted(() => {
     window.addEventListener('resize', handleWindowResize)
@@ -47,8 +49,9 @@ let handleWindowResize = () => {
             >
                 <perfect-scrollbar>
                     <ul class="navigation-left">
-                        <!-- Dashboard -->
+                        <!-- Dashboard (all roles) -->
                         <router-link
+                            v-if="canAccess('dashboard')"
                             to="/dashboards/dashboard-pegas-gonda"
                             tag="li"
                             class="nav-item"
@@ -59,8 +62,9 @@ let handleWindowResize = () => {
                             </div>
                         </router-link>
 
-                        <!-- Catalog of bandsaws -->
+                        <!-- Catalog of bandsaws (user+) -->
                         <router-link
+                            v-if="canAccess('catalog')"
                             to="/catalog"
                             tag="li"
                             class="nav-item"
@@ -71,8 +75,9 @@ let handleWindowResize = () => {
                             </div>
                         </router-link>
 
-                        <!-- My machines -->
+                        <!-- My machines (user+) -->
                         <router-link
+                            v-if="canAccess('machines')"
                             to="/my-machines"
                             tag="li"
                             class="nav-item"
@@ -83,8 +88,9 @@ let handleWindowResize = () => {
                             </div>
                         </router-link>
 
-                        <!-- Programs -->
+                        <!-- Programs (all roles) -->
                         <router-link
+                            v-if="canAccess('programs')"
                             to="/programs"
                             tag="li"
                             class="nav-item"
@@ -95,8 +101,9 @@ let handleWindowResize = () => {
                             </div>
                         </router-link>
 
-                        <!-- Management -->
+                        <!-- Management (service+) -->
                         <router-link
+                            v-if="canAccess('management')"
                             to="/management"
                             tag="li"
                             class="nav-item"

@@ -64,6 +64,7 @@ const routes = [
                 component: () => import('../views/management/index.vue'),
                 meta: {
                     title: 'Management',
+                    requiredFeature: 'management',
                 },
             },
             {
@@ -72,6 +73,7 @@ const routes = [
                 component: () => import('../views/management/Datasources.vue'),
                 meta: {
                     title: 'Datasources',
+                    requiredFeature: 'datasources',
                 },
             },
             {
@@ -80,6 +82,16 @@ const routes = [
                 component: () => import('../views/management/Dashboards.vue'),
                 meta: {
                     title: 'Dashboards',
+                    requiredFeature: 'dashboard.manage',
+                },
+            },
+            {
+                path: '/management/users',
+                name: 'UsersManagement',
+                component: () => import('../views/management/Users.vue'),
+                meta: {
+                    title: 'Users',
+                    requiredFeature: 'users',
                 },
             },
             // Notifications
@@ -146,6 +158,45 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+});
+
+// Auth navigation guard
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = store.getters['auth/isAuthenticated'];
+  const isLoginPage = to.path === '/signIn' || to.path === '/signUp';
+
+  // Allow access to login page
+  if (isLoginPage) {
+    if (isAuthenticated) {
+      return next('/');
+    }
+    return next();
+  }
+
+  // Require auth for all other routes
+  if (!isAuthenticated) {
+    return next({ path: '/signIn', query: { redirect: to.fullPath } });
+  }
+
+  // Check route-level role requirement
+  const requiredRole = to.meta?.requiredRole;
+  if (requiredRole) {
+    const hasRole = store.getters['auth/hasRole'](requiredRole);
+    if (!hasRole) {
+      return next('/'); // Redirect to home if insufficient role
+    }
+  }
+
+  // Check route-level feature requirement
+  const requiredFeature = to.meta?.requiredFeature;
+  if (requiredFeature) {
+    const canAccess = store.getters['auth/canAccess'](requiredFeature);
+    if (!canAccess) {
+      return next('/');
+    }
+  }
+
+  next();
 });
 
 router.afterEach(() => {
